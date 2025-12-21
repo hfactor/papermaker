@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Calendar Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Calendar Generator</h1>
+            <p class="subtitle">Create minimal, functional calendars for GoodNotes, Notability & Remarkable</p>
+        </header>
+
+        <form id="calendar-config-form">
+            <!-- Page Selection -->
+            <section class="form-section">
+                <h2>Pages to Include</h2>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="pages" value="year" id="page-year" checked>
+                        <span>Year Calendar</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="pages" value="quarter" id="page-quarter">
+                        <span>Quarter Spreads</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="pages" value="month" id="page-month" checked>
+                        <span>Month Spreads</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="pages" value="week" id="page-week">
+                        <span>Weekly Spreads</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="pages" value="daily" id="page-daily">
+                        <span>Daily Pages</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Calendar Settings -->
+            <section class="form-section">
+                <h2>Calendar Settings</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" min="2000" max="2100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="start-day">Week Starts On</label>
+                        <select id="start-day" name="startDay">
+                            <option value="monday">Monday</option>
+                            <option value="sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="weekend-color">Weekend Color</label>
+                        <input type="color" id="weekend-color" name="weekendColor" value="#e8f4f8">
+                    </div>
+                    <div class="form-group">
+                        <label for="month-format">Month Name Format</label>
+                        <select id="month-format" name="monthFormat">
+                            <option value="full">Full (January)</option>
+                            <option value="abbreviated">Abbreviated (Jan)</option>
+                            <option value="single">Single Letter (J)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Paper Style -->
+            <section class="form-section">
+                <h2>Paper Style</h2>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="paperStyle" value="plain" checked>
+                        <span>Plain</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="paperStyle" value="grid">
+                        <span>Grid</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="paperStyle" value="dot">
+                        <span>Dot</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="paperStyle" value="line">
+                        <span>Line</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Customization -->
+            <section class="form-section">
+                <h2>Customization</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="font">Font</label>
+                        <select id="font" name="font">
+                            <option value="Inter">Inter</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Open Sans">Open Sans</option>
+                            <option value="Lato">Lato</option>
+                            <option value="Montserrat">Montserrat</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="custom-font-group" style="display: none;">
+                        <label for="custom-font">Custom Font Name</label>
+                        <input type="text" id="custom-font" name="customFont" placeholder="e.g., Helvetica">
+                    </div>
+                    <div class="form-group">
+                        <label for="primary-color">Primary Color</label>
+                        <input type="color" id="primary-color" name="primaryColor" value="#000000">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="first-page-title">First Page Title</label>
+                        <input type="text" id="first-page-title" name="firstPageTitle" placeholder="e.g., My 2025 Calendar">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions -->
+            <div class="actions">
+                <button type="button" id="save-config" class="btn btn-secondary">Save Configuration</button>
+                <button type="button" id="load-config" class="btn btn-secondary">Load Configuration</button>
+                <button type="submit" class="btn btn-primary">Download Configuration</button>
+            </div>
+        </form>
+
+        <footer>
+            <p>Generate your configuration, then use the build script to create your PDF calendar.</p>
+            <p class="help-text">See <code>README.md</code> for build instructions.</p>
+        </footer>
+    </div>
+
+    <input type="file" id="file-input" accept=".json" style="display: none;">
+    <script src="app.js"></script>
+</body>
+</html>

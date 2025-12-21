@@ -1,0 +1,18 @@
+{
+    "pages": {
+        "year": true,
+        "quarter": false,
+        "month": true,
+        "week": false,
+        "daily": false
+    },
+    "year": 2025,
+    "startDay": "monday",
+    "weekendColor": "#e8f4f8",
+    "monthFormat": "abbreviated",
+    "paperStyle": "plain",
+    "font": "Roboto",
+    "customFont": "",
+    "primaryColor": "#1a1a1a",
+    "firstPageTitle": "2025"
+}
