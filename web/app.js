@@ -1,227 +1,402 @@
 // Configuration state
 let config = {
     pages: {
+        cover: true,
         year: true,
         quarter: false,
         month: true,
         week: false,
-        daily: false
+        daily: true,
+        extraDaily: false
     },
-    year: new Date().getFullYear(),
-    startDay: 'monday',
-    weekendColor: '#e8f4f8',
+    year: 2026,
+    startMonth: 1,
+    totalMonths: 12,
+    pageOrder: 'sequential',
+    coverImage: '',
+    startDay: 0,
     monthFormat: 'full',
+    dayFormat: 'full',
     paperStyle: 'plain',
-    font: 'Inter',
-    customFont: '',
-    primaryColor: '#000000',
-    firstPageTitle: ''
+    guides: 'none',
+    firstPageTitle: '',
+    plannerPos: 'left',
+    plannerStartHour: 5,
+    plannerEndHour: 23,
+    showDivisions: false,
+    style: {
+        font: 'Inter',
+        fontWeight: '400',
+        headingFont: 'Inter',
+        headingWeight: '700',
+        baseFontSize: 10,
+        headerSize: 14,
+        titleSize: 24,
+        primaryColor: '#2c3e50',
+        bgColor: '#ffffff',
+        headerColor: '#2c3e50',
+        margin: 6,
+        gridSpacing: 5,
+        strokeWidth: 0.5,
+        borderRadius: 2
+    },
+    preset: 'custom'
 };
 
-// DOM Elements
-const form = document.getElementById('calendar-config-form');
-const fontSelect = document.getElementById('font');
-const customFontGroup = document.getElementById('custom-font-group');
-const yearInput = document.getElementById('year');
-const fileInput = document.getElementById('file-input');
+const THEMES = {
+    light: {
+        primary: '#2563eb',
+        header: '#1e40af',
+        bg: '#ffffff'
+    },
+    dark: {
+        primary: '#88c0d0',
+        header: '#eceff4',
+        bg: '#2e3440'
+    },
+    paper: {
+        primary: '#b58900',
+        header: '#586e75',
+        bg: '#fdf6e3'
+    }
+};
+
+// UI Elements
+const generateBtn = document.getElementById('generate-btn');
+const downloadBtn = document.getElementById('download-btn');
+const statusMessage = document.getElementById('status-message');
+const pageCountEl = document.getElementById('page-count');
 
 // Initialize
-function init() {
-    // Set current year
-    yearInput.value = config.year;
+document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
+    updateFormFromConfig();
+    setupColorSync();
+    setupChangeListeners();
+    setupPresetListener();
+    updateLiveMetrics();
+    setupFontLoader();
+});
 
-    // Load saved config from localStorage
-    loadFromLocalStorage();
-
-    // Event listeners
-    form.addEventListener('submit', handleDownload);
-    document.getElementById('save-config').addEventListener('click', saveToLocalStorage);
-    document.getElementById('load-config').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', handleFileLoad);
-    fontSelect.addEventListener('change', handleFontChange);
-
-    // Page checkboxes
-    document.querySelectorAll('input[name="pages"]').forEach(checkbox => {
-        checkbox.addEventListener('change', handlePageToggle);
+function setupPresetListener() {
+    const presetSelect = document.getElementById('theme-preset');
+    presetSelect.addEventListener('change', (e) => {
+        const theme = THEMES[e.target.value];
+        if (theme) {
+            updateColorField('primary', theme.primary);
+            updateColorField('header', theme.header);
+            updateColorField('bg', theme.bg);
+            updateConfigFromForm();
+        }
     });
-
-    // Auto-save on any change
-    form.addEventListener('change', updateConfigFromForm);
 }
 
-// Handle font selection
-function handleFontChange(e) {
-    if (e.target.value === 'custom') {
-        customFontGroup.style.display = 'block';
-    } else {
-        customFontGroup.style.display = 'none';
+function setupFontLoader() {
+    const fontInputs = ['font', 'heading-font'];
+    fontInputs.forEach(id => {
+        const input = document.getElementById(id);
+        const weightSelect = document.getElementById(`${id}-weight`);
+
+        input.addEventListener('change', () => loadGoogleFont(input.value, weightSelect.value, id));
+        weightSelect.addEventListener('change', () => loadGoogleFont(input.value, weightSelect.value, id));
+        loadGoogleFont(input.value, weightSelect.value, id); // Initial load
+    });
+}
+
+function loadGoogleFont(fontName, weight = '400', elId = 'font') {
+    if (!fontName || fontName === 'Inter') return;
+
+    // Create or update link tag
+    const linkId = `gfont-${fontName.replace(/\s+/g, '-').toLowerCase()}-${weight}`;
+    if (document.getElementById(linkId)) return;
+
+    const link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@${weight}&display=swap`;
+    document.head.appendChild(link);
+
+    // Apply preview style
+    const el = document.getElementById(elId);
+    if (el) {
+        el.style.fontFamily = `'${fontName}', sans-serif`;
+        el.style.fontWeight = weight;
     }
 }
 
-// Handle page toggle
-function handlePageToggle(e) {
-    const page = e.target.value;
-    const isChecked = e.target.checked;
 
-    // Update config
-    config.pages[page] = isChecked;
+function setupColorSync() {
+    const colorFields = ['primary', 'header', 'bg'];
+    colorFields.forEach(field => {
+        const picker = document.getElementById(`${field}-color`);
+        const hex = document.getElementById(`${field}-color-hex`);
 
-    // Show warning if disabling year
-    if (page === 'year' && !isChecked) {
-        if (!confirm('Disabling the year calendar will remove the main overview page. Continue?')) {
-            e.target.checked = true;
-            config.pages[page] = true;
-            return;
+        if (!picker || !hex) return;
+
+        picker.addEventListener('input', () => {
+            hex.value = picker.value;
+            updateConfigFromForm();
+        });
+
+        hex.addEventListener('input', () => {
+            if (/^#[0-9A-F]{6}$/i.test(hex.value)) {
+                picker.value = hex.value;
+                updateConfigFromForm();
+            }
+        });
+    });
+}
+
+function setupChangeListeners() {
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', () => {
+            updateConfigFromForm();
+            updateLiveMetrics();
+        });
+    });
+
+    // Daily dependency
+    document.getElementById('page-daily').addEventListener('change', (e) => {
+        const extraField = document.getElementById('extra-daily-field');
+        if (e.target.checked) {
+            extraField.classList.add('active');
+        } else {
+            extraField.classList.remove('active');
+            document.getElementById('page-extraDaily').checked = false;
+        }
+    });
+}
+
+function updateLiveMetrics() {
+    const isDaily = document.getElementById('page-daily').checked;
+    const isMonth = document.getElementById('page-month').checked;
+    const isWeek = document.getElementById('page-week').checked;
+
+    // Toggle extra daily field
+    const extraField = document.getElementById('extra-daily-field');
+    if (isDaily) extraField.classList.add('active');
+    else extraField.classList.remove('active');
+
+    // Logical Sequencing Blocking
+    const seqSelect = document.getElementById('page-order');
+    const optMD = document.getElementById('opt-month-days');
+    const optWD = document.getElementById('opt-week-days');
+
+    optMD.disabled = !(isMonth && isDaily);
+    optWD.disabled = !(isWeek && isDaily);
+
+    if (seqSelect.value === 'month-days' && optMD.disabled) seqSelect.value = 'sequential';
+    if (seqSelect.value === 'week-days' && optWD.disabled) seqSelect.value = 'sequential';
+
+    // Page count
+    const count = calculateTotalPages();
+    pageCountEl.textContent = count;
+}
+
+function calculateTotalPages() {
+    let total = 0;
+    const months = parseInt(document.getElementById('total-months').value) || 0;
+
+    if (document.getElementById('page-cover').checked) total += 1;
+    if (document.getElementById('page-year').checked) total += 1;
+
+    if (document.getElementById('page-quarter').checked) {
+        total += Math.ceil(months / 3);
+    }
+
+    if (document.getElementById('page-month').checked) {
+        total += months;
+    }
+
+    if (document.getElementById('page-week').checked) {
+        total += Math.ceil(months * 4.34);
+    }
+
+    if (document.getElementById('page-daily').checked) {
+        const startYear = parseInt(document.getElementById('year').value);
+        const startMonth = parseInt(document.getElementById('start-month').value);
+        const startDate = new Date(startYear, startMonth - 1, 1);
+        const endDate = new Date(startYear, startMonth - 1 + months, 0);
+        const days = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+        total += days;
+        if (document.getElementById('page-extraDaily').checked) {
+            total += days;
         }
     }
 
-    updateConfigFromForm();
+    return total;
 }
 
-// Update config from form
 function updateConfigFromForm() {
-    // Pages
-    document.querySelectorAll('input[name="pages"]').forEach(checkbox => {
-        config.pages[checkbox.value] = checkbox.checked;
+    ['cover', 'year', 'quarter', 'month', 'week', 'daily', 'extraDaily'].forEach(p => {
+        config.pages[p] = document.getElementById(`page-${p}`).checked;
     });
 
-    // Settings
-    config.year = parseInt(yearInput.value);
-    config.startDay = document.getElementById('start-day').value;
-    config.weekendColor = document.getElementById('weekend-color').value;
-    config.monthFormat = document.getElementById('month-format').value;
+    config.year = parseInt(document.getElementById('year').value);
+    config.startMonth = parseInt(document.getElementById('start-month').value);
+    config.totalMonths = parseInt(document.getElementById('total-months').value);
+    config.pageOrder = document.getElementById('page-order').value;
+    config.startDay = parseInt(document.getElementById('start-day').value);
+    config.firstPageTitle = document.getElementById('cover-title').value;
+    config.coverImage = document.getElementById('cover-image').value;
 
-    // Paper style
+    const monthFormat = document.querySelector('input[name="monthFormat"]:checked');
+    config.monthFormat = monthFormat ? monthFormat.value : 'full';
+
+    const dayFormat = document.querySelector('input[name="dayFormat"]:checked');
+    config.dayFormat = dayFormat ? dayFormat.value : 'full';
+
     const paperStyle = document.querySelector('input[name="paperStyle"]:checked');
     config.paperStyle = paperStyle ? paperStyle.value : 'plain';
 
-    // Customization
-    const fontValue = fontSelect.value;
-    if (fontValue === 'custom') {
-        config.font = document.getElementById('custom-font').value || 'Inter';
-    } else {
-        config.font = fontValue;
-    }
-    config.primaryColor = document.getElementById('primary-color').value;
-    config.firstPageTitle = document.getElementById('first-page-title').value;
+    const guides = document.querySelector('input[name="guides"]:checked');
+    config.guides = guides ? guides.value : 'none';
 
-    // Auto-save to localStorage
-    localStorage.setItem('calendar-config', JSON.stringify(config));
+
+    const plannerPos = document.querySelector('input[name="plannerPos"]:checked');
+    config.plannerPos = plannerPos ? plannerPos.value : 'left';
+    config.plannerStartHour = parseInt(document.getElementById('planner-start').value);
+    config.plannerEndHour = parseInt(document.getElementById('planner-end').value);
+    config.showDivisions = document.getElementById('show-divisions').checked;
+
+    config.style.font = document.getElementById('font').value;
+    config.style.fontWeight = document.getElementById('font-weight').value;
+    config.style.headingFont = document.getElementById('heading-font').value;
+    config.style.headingWeight = document.getElementById('heading-font-weight').value;
+    config.style.baseFontSize = parseFloat(document.getElementById('base-font-size').value);
+    config.style.headerSize = parseFloat(document.getElementById('header-size').value);
+    config.style.titleSize = parseFloat(document.getElementById('title-size').value);
+
+    config.style.primaryColor = document.getElementById('primary-color').value;
+    config.style.headerColor = document.getElementById('header-color').value;
+    config.style.bgColor = document.getElementById('bg-color').value;
+
+    config.style.margin = parseFloat(document.getElementById('margin').value);
+    config.style.gridSpacing = parseFloat(document.getElementById('grid-spacing').value);
+    config.style.strokeWidth = parseFloat(document.getElementById('stroke-width').value);
+    config.style.borderRadius = parseFloat(document.getElementById('border-radius').value);
+
+    config.preset = document.getElementById('theme-preset').value;
+
+    saveConfig();
 }
 
-// Update form from config
 function updateFormFromConfig() {
-    // Pages
-    Object.keys(config.pages).forEach(page => {
-        const checkbox = document.getElementById(`page-${page}`);
-        if (checkbox) {
-            checkbox.checked = config.pages[page];
-        }
+    ['cover', 'year', 'quarter', 'month', 'week', 'daily', 'extraDaily'].forEach(p => {
+        const el = document.getElementById(`page-${p}`);
+        if (el) el.checked = !!config.pages[p];
     });
 
-    // Settings
-    yearInput.value = config.year;
+    document.getElementById('year').value = config.year;
+    document.getElementById('start-month').value = config.startMonth;
+    document.getElementById('total-months').value = config.totalMonths;
+    document.getElementById('page-order').value = config.pageOrder;
     document.getElementById('start-day').value = config.startDay;
-    document.getElementById('weekend-color').value = config.weekendColor;
-    document.getElementById('month-format').value = config.monthFormat;
+    document.getElementById('cover-title').value = config.firstPageTitle || 'Calendar';
+    document.getElementById('cover-image').value = config.coverImage || '';
 
-    // Paper style
-    const paperStyleRadio = document.querySelector(`input[name="paperStyle"][value="${config.paperStyle}"]`);
-    if (paperStyleRadio) {
-        paperStyleRadio.checked = true;
-    }
+    document.getElementById('theme-preset').value = config.preset || 'custom';
 
-    // Customization
-    if (['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat'].includes(config.font)) {
-        fontSelect.value = config.font;
-        customFontGroup.style.display = 'none';
-    } else {
-        fontSelect.value = 'custom';
-        document.getElementById('custom-font').value = config.font;
-        customFontGroup.style.display = 'block';
-    }
-    document.getElementById('primary-color').value = config.primaryColor;
-    document.getElementById('first-page-title').value = config.firstPageTitle;
+    syncRadioField('monthFormat', config.monthFormat);
+    syncRadioField('dayFormat', config.dayFormat);
+    syncRadioField('paperStyle', config.paperStyle);
+    syncRadioField('guides', config.guides);
+    syncRadioField('plannerPos', config.plannerPos || 'left');
+
+    document.getElementById('planner-start').value = config.plannerStartHour || 5;
+    document.getElementById('planner-end').value = config.plannerEndHour || 23;
+    document.getElementById('show-divisions').checked = !!config.showDivisions;
+
+    const s = config.style || {};
+    document.getElementById('font').value = s.font || 'Inter';
+    document.getElementById('font-weight').value = s.fontWeight || '400';
+    document.getElementById('heading-font').value = s.headingFont || 'Inter';
+    document.getElementById('heading-font-weight').value = s.headingWeight || '700';
+    document.getElementById('base-font-size').value = s.baseFontSize || 10;
+    document.getElementById('header-size').value = s.headerSize || 14;
+    document.getElementById('title-size').value = s.titleSize || 24;
+
+    updateColorField('primary', s.primaryColor || '#2c3e50');
+    updateColorField('header', s.headerColor || '#2c3e50');
+    updateColorField('bg', s.bgColor || '#ffffff');
+
+    document.getElementById('margin').value = s.margin || 6;
+    document.getElementById('grid-spacing').value = s.gridSpacing || 5;
+    document.getElementById('stroke-width').value = s.strokeWidth || 0.5;
+    document.getElementById('border-radius').value = s.borderRadius || 2;
+
+    // Load fonts in UI
+    loadGoogleFont(s.font);
+    loadGoogleFont(s.headingFont);
 }
 
-// Save to localStorage
-function saveToLocalStorage() {
-    updateConfigFromForm();
-    alert('Configuration saved locally!');
+function syncRadioField(name, value) {
+    const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+    if (radio) radio.checked = true;
 }
 
-// Load from localStorage
-function loadFromLocalStorage() {
-    const saved = localStorage.getItem('calendar-config');
+function updateColorField(id, value) {
+    const picker = document.getElementById(`${id}-color`);
+    const hex = document.getElementById(`${id}-color-hex`);
+    if (picker) picker.value = value;
+    if (hex) hex.value = value;
+}
+
+function saveConfig() {
+    localStorage.setItem('calendarConfigV4', JSON.stringify(config));
+}
+
+function loadConfig() {
+    const saved = localStorage.getItem('calendarConfigV4');
     if (saved) {
         try {
-            config = JSON.parse(saved);
-            updateFormFromConfig();
+            const parsed = JSON.parse(saved);
+            config = { ...config, ...parsed };
         } catch (e) {
-            console.error('Failed to load saved config:', e);
+            console.error('Failed to load config', e);
         }
     }
 }
 
-// Handle file load
-function handleFileLoad(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        try {
-            config = JSON.parse(event.target.result);
-            updateFormFromConfig();
-            alert('Configuration loaded successfully!');
-        } catch (error) {
-            alert('Error loading configuration file. Please check the file format.');
-            console.error('Load error:', error);
-        }
-    };
-    reader.readAsText(file);
-
-    // Reset file input
-    fileInput.value = '';
-}
-
-// Handle download
-function handleDownload(e) {
-    e.preventDefault();
+// Generate PDF
+generateBtn.addEventListener('click', async () => {
     updateConfigFromForm();
 
-    // Validate
-    if (!config.year || config.year < 2000 || config.year > 2100) {
-        alert('Please enter a valid year between 2000 and 2100');
-        return;
+    statusMessage.textContent = 'Processing...';
+    statusMessage.style.color = 'var(--accent)';
+    generateBtn.disabled = true;
+    downloadBtn.style.display = 'none';
+
+    try {
+        const response = await fetch('/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            statusMessage.textContent = 'PDF Ready!';
+            statusMessage.style.color = '#10b981';
+            downloadBtn.style.display = 'block';
+            downloadBtn.onclick = () => {
+                window.location.href = `/output/${data.filename}`;
+            };
+        } else {
+            statusMessage.textContent = 'Build Error: ' + data.message;
+            statusMessage.style.color = '#ef4444';
+        }
+    } catch (error) {
+        console.error('Generation failed:', error);
+        statusMessage.textContent = 'Network Error: ' + error.message + '. Is the server running?';
+        statusMessage.style.color = '#ef4444';
+    } finally {
+        generateBtn.disabled = false;
     }
-
-    // Check if at least one page is selected
-    const hasPages = Object.values(config.pages).some(v => v);
-    if (!hasPages) {
-        alert('Please select at least one page type');
-        return;
-    }
-
-    // Create filename
-    const filename = `calendar-config-${config.year}.json`;
-
-    // Download
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    // Show success message
-    setTimeout(() => {
-        alert(`Configuration downloaded as ${filename}\n\nNext step: Run the build script to generate your PDF calendar.`);
-    }, 100);
-}
-
-// Initialize on load
-document.addEventListener('DOMContentLoaded', init);
+});

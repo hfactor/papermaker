@@ -1,0 +1,42 @@
+{
+    "pages": {
+        "cover": true,
+        "year": true,
+        "quarter": false,
+        "month": true,
+        "week": false,
+        "daily": true,
+        "extraDaily": true
+    },
+    "year": 2026,
+    "startMonth": 1,
+    "totalMonths": 3,
+    "pageOrder": "month-days",
+    "coverImage": "",
+    "startDay": 0,
+    "monthFormat": "full",
+    "dayFormat": "full",
+    "paperStyle": "dot",
+    "guides": "centre",
+    "showPageBorder": true,
+    "firstPageTitle": "Nordic Planner 2026",
+    "style": {
+        "font": "Inter",
+        "headingFont": "Inter",
+        "baseFontSize": 10,
+        "headerSize": 14,
+        "titleSize": 24,
+        "primaryColor": "#88c0d0",
+        "headerColor": "#8fbcbb",
+        "secondaryColor": "#4c566a",
+        "weekendColor": "#3b4252",
+        "patternColor": "#434c5e",
+        "bgColor": "#2e3440",
+        "linkColor": "#88c0d0",
+        "margin": 10,
+        "gridSpacing": 5,
+        "strokeWidth": 0.5,
+        "borderRadius": 2,
+        "cellHeight": 45
+    }
+}

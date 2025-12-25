@@ -1,0 +1,24 @@
+{
+    "pages": {
+        "cover": true,
+        "year": true,
+        "quarter": true,
+        "month": true,
+        "week": true,
+        "daily": true,
+        "extraDaily": true
+    },
+    "year": 2026,
+    "startMonth": 4,
+    "totalMonths": 12,
+    "pageOrder": "sequential",
+    "coverImage": "",
+    "startDay": "monday",
+    "weekendColor": "#e8f4f8",
+    "monthFormat": "full",
+    "paperStyle": "plain",
+    "font": "Inter",
+    "customFont": "",
+    "primaryColor": "#000000",
+    "firstPageTitle": "My Cross-Year Calendar 2026-27"
+}

@@ -1,158 +1,105 @@
-// Year calendar component - full year overview
+// Year calendar component - compact single-page overview
 
 #import "../utils/dates.typ": *
 #import "../utils/hyperlinks.typ": *
 #import "../utils/styles.typ": *
 
-#let year-calendar(config) = [
-  #let year = config.year
-  #let primary-color = rgb(config.primaryColor)
-  #let weekend-color = rgb(config.weekendColor)
-  #let title = if config.firstPageTitle != "" { config.firstPageTitle } else { str(year) }
+#let year-calendar(config) = {
+  // Config is normalized to new format
+  let year = config.timeRange.startYear
+  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
+  let weekend-color = dark1.transparentize(60%)
+  let primary-font = config.typography.at("primaryFont", default: "Lato")
+  let title-sz = 24pt * config.typography.at("fontScale", default: 1.0)
   
-  // Set page label for navigation
-  #page-label("year", year)
+  let title = config.generation.pages.cover.at("title", default: str(year))
+  let start-day-idx = get-start-day-idx(config)
   
-  #pagebreak(weak: true)
-  
-  // Title
-  #align(center)[
-    #text(size: 24pt, weight: "bold", fill: primary-color)[#title]
-    #v(1em)
-  ]
-  
-  // 12-month grid (4 rows x 3 columns)
-  #grid(
-    columns: (1fr, 1fr, 1fr),
-    rows: (auto, auto, auto, auto),
-    gutter: 15pt,
-    
-    ..for month in range(1, 13) {
-      (
-        {
-          let month-name = get-month-name(month, format: config.monthFormat)
-          let first-day = first-day-of-month(year, month)
-          let num-days = days-in-month(year, month)
-          
-          // Adjust first day based on start-day config
-          let offset = if config.startDay == "sunday" {
-            calc.rem(first-day + 1, 7)
-          } else {
-            first-day
-          }
-          
-          // Month container
-          rect(
-            width: 100%,
-            stroke: 0.5pt + rgb("#d0d0d0"),
-            inset: 8pt
-          )[
-            // Month name (clickable if month pages enabled)
+  [
+    #paper-block(config, force-plain: true, body: [
+      #align(center)[
+        #text(font: primary-font, size: title-sz, weight: "bold", fill: dark1)[#title]
+      ]
+      #v(0.4em)
+      
+      #grid(
+        columns: (1fr, 1fr, 1fr, 1fr),
+        column-gutter: 12pt,
+        row-gutter: 50pt,
+        align: top,
+        
+        ..range(1, 13).map(month => {
+          block(width: 100%, breakable: false)[
+            #let month-name = get-month-name(month, format: config.generation.pages.month.at("labels", default: "full"))
+            #let first-day = first-day-of-month(year, month)
+            #let num-days = days-in-month(year, month)
+            #let offset = calc.rem(first-day - start-day-idx + 7, 7)
+            #let headers = get-day-headers(start-day: start-day-idx, format: "first")
+            
             #align(center)[
-              #if config.pages.month {
+              #if config.generation.pages.month.at("enabled", default: false) {
                 nav-link(
-                  text(size: 11pt, weight: "bold")[#month-name],
+                  config,
+                  text(font: primary-font, size: 9pt, weight: "bold")[#month-name],
                   "month",
                   year,
                   month: month,
-                  color: primary-color
+                  color: dark1
                 )
               } else {
-                text(size: 11pt, weight: "bold", fill: primary-color)[#month-name]
+                text(font: primary-font, size: 9pt, weight: "bold", fill: dark1)[#month-name]
               }
             ]
             
-            #v(4pt)
+            #v(1pt)
             
-            // Day headers
-            #grid(
-              columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-              gutter: 2pt,
-              ..{
-                let headers = if config.startDay == "sunday" {
-                  ("S", "M", "T", "W", "T", "F", "S")
-                } else {
-                  ("M", "T", "W", "T", "F", "S", "S")
-                }
-                headers.map(h => align(center)[#text(size: 7pt, fill: rgb("#666"))[#h]])
-              }
-            )
-            
-            #v(2pt)
-            
-            // Calendar grid
-            #grid(
-              columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-              gutter: 2pt,
-              
-              // Empty cells before first day
-              ..range(offset).map(_ => []),
-              
-              // Days of month
-              ..range(1, num-days + 1).map(day => {
-                let is-wknd = is-weekend(year, month, day, start-day: config.startDay)
-                let cell-bg = if is-wknd { weekend-color } else { none }
-                
-                align(center)[
-                  #if config.pages.daily {
-                    rect(
-                      width: 100%,
-                      height: 100%,
-                      fill: cell-bg,
-                      inset: 2pt,
-                      stroke: none
-                    )[
-                      #nav-link(
-                        text(size: 7pt)[#str(day)],
-                        "day",
-                        year,
-                        month: month,
-                        day: day,
-                        color: primary-color
-                      )
-                    ]
-                  } else {
-                    rect(
-                      width: 100%,
-                      height: 100%,
-                      fill: cell-bg,
-                      inset: 2pt,
-                      stroke: none
-                    )[
-                      #text(size: 7pt)[#str(day)]
-                    ]
+            #let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
+            #table(
+              columns: (1fr,) * 7,
+              rows: (13.5pt,) * 7,
+              column-gutter: 1pt,
+              row-gutter: 1pt,
+              stroke: none,
+              fill: (x, y) => {
+                let day-idx = (y - 1) * 7 + x - offset + 1
+                if day-idx >= 1 and day-idx <= num-days {
+                  if is-weekend(year, month, day-idx, config: config) {
+                    return weekend-color
                   }
-                ]
+                }
+                return none
+              },
+              inset: 0pt,
+              align: center + horizon,
+              
+              ..headers.map(h => text(size: 5pt, weight: "bold", fill: dark1.transparentize(50%))[#h]),
+              
+              ..range(7 * 6).map(i => {
+                let day-idx = i - offset + 1
+                if day-idx >= 1 and day-idx <= num-days {
+                  if config.generation.pages.day.at("enabled", default: false) {
+                    nav-link(
+                      config,
+                      text(size: 6.5pt, weight: "medium")[#fmt-dd(day-idx)],
+                      "day",
+                      year,
+                      month: month,
+                      day: day-idx,
+                      color: dark1
+                    )
+                  } else {
+                    text(size: 6.5pt, fill: dark1)[#fmt-dd(day-idx)]
+                  }
+                } else {
+                  []
+                }
               })
-            )
-          ]
-        },
-      )
-    }
-  )
-  
-  // Quarter links (if enabled)
-  #if config.pages.quarter [
-    #v(2em)
-    #align(center)[
-      #text(size: 12pt, weight: "bold", fill: primary-color)[Quarters]
-      #v(0.5em)
-      #grid(
-        columns: (1fr, 1fr, 1fr, 1fr),
-        gutter: 10pt,
-        ..range(1, 5).map(q => {
-          align(center)[
-            #nav-link(
-              text(size: 10pt)[Q#str(q)],
-              "quarter",
-              year,
-              quarter: q,
-              color: primary-color
             )
           ]
         })
       )
-    ]
+    ])
+    #page-label("year", year)
   ]
-]
-
+}

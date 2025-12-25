@@ -1,114 +1,76 @@
-// Daily page component - single day per page
+// Daily page component - single day per page with paper style variations
 
 #import "../utils/dates.typ": *
 #import "../utils/hyperlinks.typ": *
 #import "../utils/styles.typ": *
 
-#let daily-page(config, year, month, day) = [
-  let primary-color = rgb(config.primaryColor)
+#let daily-page(config, year, month, day) = {
+  // Config is normalized to new format
+  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
+  let primary-font = config.typography.at("primaryFont", default: "Lato")
+  
   let month-name = get-month-name(month, format: "full")
   let dow = day-of-week(year, month, day)
+  let day-name = get-day-name(dow, format: "full")
+
+  let start-h = safe-parse-hour(config.planner.at("startTime", default: "08:00"))
+  let end-h = safe-parse-hour(config.planner.at("endTime", default: "20:00"))
+  let planner-pos = config.generation.pages.day.at("columnSide", default: "right")
+  let show-divs = config.planner.at("showDivisions", default: false)
   
-  let day-names = if config.startDay == "sunday" {
-    ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-  } else {
-    ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-  }
-  
-  let day-name = day-names.at(dow)
-  let is-wknd = is-weekend(year, month, day, start-day: config.startDay)
-  let wk-num = week-number(year, month, day)
-  
-  // Set page label
-  #page-label("day", year, month: month, day: day)
-  
-  pagebreak(weak: true)
-  
-  // Header with breadcrumb navigation
-  let nav-items = (
-    nav-link([Year], "year", year, color: primary-color),
+  let planner-col = planner-column(
+    config, 
+    date-header(config, year, month, day, size: "small", show-divider: false),
+    start-h: start-h, 
+    end-h: end-h, 
+    show-divs: show-divs,
+    text-size: 7pt,
+    show-border: false
   )
   
-  if config.pages.month {
-    nav-items.push(
-      nav-link([#month-name], "month", year, month: month, color: primary-color)
-    )
-  }
-  
-  if config.pages.week {
-    // Calculate week start day (simplified)
-    let week-start = calc.max(1, day - dow)
-    nav-items.push(
-      nav-link([Week #str(wk-num)], "week", year, week: wk-num, color: primary-color)
-    )
-  }
-  
-  align(center)[
-    #breadcrumb(nav-items, color: primary-color)
-  ]
-  
-  v(1em)
-  divider(color: primary-color)
-  v(1em)
-  
-  // Date header
-  align(center)[
-    #text(size: 20pt, weight: "bold", fill: primary-color)[
-      #day-name, #month-name #str(day), #str(year)
+  let q = calc.floor((month - 1) / 3) + 1
+  let note-col = block(width: 100%, height: 100%)[
+    #align(right)[
+      #nav-link(config, text(size: 10pt, weight: "bold")[Q#str(q)], "quarter", year, quarter: q, color: dark2.transparentize(40%))
     ]
-    #if is-wknd {
-      v(0.3em)
-      text(size: 10pt, fill: rgb("#999"))[Weekend]
-    }
+    #v(2pt)
+    #paper-block(config, force-plain: false, show-guides: true)
   ]
   
-  v(1.5em)
-  divider(color: rgb("#e0e0e0"))
-  v(1.5em)
-  
-  // Main content area with paper style
-  let paper-color = rgb("#e8e8e8")
-  
-  if config.paperStyle == "grid" {
-    // Grid pattern
-    let grid-size = 5mm
-    for row in range(25) {
-      grid(
-        columns: (grid-size,) * 35,
-        gutter: 0pt,
-        ..range(35).map(_ => {
-          rect(
-            width: grid-size,
-            height: grid-size,
-            stroke: 0.3pt + paper-color,
-            fill: none
-          )
-        })
+  [
+    #paper-block(config, force-plain: true, show-guides: false, body: [
+      #let cols = if planner-pos == "left" { (24%, 2.5%, 73.5%) } else { (73.5%, 2.5%, 24%) }
+      #grid(
+        columns: cols,
+        rows: (1fr,),
+        column-gutter: 0pt,
+        
+        if planner-pos == "left" { planner-col } else { note-col },
+        [],
+        if planner-pos == "left" { note-col } else { planner-col }
       )
-    }
-  } else if config.paperStyle == "dot" {
-    // Dot pattern
-    let dot-spacing = 5mm
-    for row in range(25) {
-      v(dot-spacing)
-      grid(
-        columns: (dot-spacing,) * 35,
-        gutter: 0pt,
-        ..range(35).map(_ => {
-          align(center + horizon)[
-            #circle(radius: 0.5pt, fill: paper-color)
-          ]
-        })
+    ])
+    #page-label("day", year, month: month, day: day)
+  ]
+}
+
+#let extra-daily-page(config, year, month, day) = {
+  let planner-pos = config.generation.pages.day.at("columnSide", default: "left")
+  
+  [
+    #paper-block(config, force-plain: false, show-guides: true, body: [
+      #place(
+        if planner-pos == "left" { top + left } else { top + right },
+        box(
+          inset: 15pt,
+          fill: none, // Removed background
+          radius: 0pt,
+          stroke: none,
+          date-header(config, year, month, day, size: "small", show-divider: false)
+        )
       )
-    }
-  } else if config.paperStyle == "line" {
-    // Horizontal lines
-    for row in range(30) {
-      v(6mm)
-      line(length: 100%, stroke: 0.3pt + paper-color)
-    }
-  } else {
-    // Plain - just empty space
-    v(1fr)
-  }
-]
+    ])
+    #page-label("extra", year, month: month, day: day)
+  ]
+}

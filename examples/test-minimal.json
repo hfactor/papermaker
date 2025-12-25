@@ -1,0 +1,18 @@
+{
+    "pages": {
+        "year": true,
+        "quarter": false,
+        "month": true,
+        "week": false,
+        "daily": false
+    },
+    "year": 2026,
+    "startDay": "monday",
+    "weekendColor": "#e8f4f8",
+    "monthFormat": "full",
+    "paperStyle": "plain",
+    "font": "Inter",
+    "customFont": "",
+    "primaryColor": "#000000",
+    "firstPageTitle": "My 2026 Calendar"
+}

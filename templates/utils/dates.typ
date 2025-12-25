@@ -6,12 +6,55 @@
          "July", "August", "September", "October", "November", "December"),
   abbreviated: ("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
-  single: ("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
+  first: ("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
 )
 
 // Get month name in specified format
 #let get-month-name(month, format: "full") = {
-  month-names.at(format).at(month - 1)
+  month-names.at(format, default: month-names.full).at(month - 1)
+}
+
+// Get day name by index (0=Mon, 6=Sun)
+#let get-day-name(dow, format: "full") = {
+  let names = (
+    full: ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+    abbreviated: ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+    first: ("M", "T", "W", "T", "F", "S", "S")
+  )
+  names.at(format, default: names.full).at(dow)
+}
+
+// Get day names starting from a specific day index (0-6)
+#let get-day-headers(start-day: 0, format: "full") = {
+  let rotated = ()
+  for i in range(7) {
+    rotated.push(calc.rem(start-day + i, 7))
+  }
+  rotated.map(idx => get-day-name(idx, format: format))
+}
+
+// Get start day index from config (supports 0-6 or "monday"-"sunday")
+#let get-start-day-idx(config) = {
+  let val = config.week.at("startDay", default: "monday")
+  if type(val) == int {
+    return val
+  }
+  
+  if type(val) != str {
+    return 0
+  }
+  
+  let days = (
+    "monday": 0, "mon": 0,
+    "tuesday": 1, "tue": 1,
+    "wednesday": 2, "wed": 2,
+    "thursday": 3, "thu": 3,
+    "friday": 4, "fri": 4,
+    "saturday": 5, "sat": 5,
+    "sunday": 6, "sun": 6
+  )
+  
+  days.at(lower(val), default: 0)
 }
 
 // Check if a year is a leap year
@@ -58,47 +101,113 @@
   day-of-week(year, month, 1)
 }
 
-// Calculate ISO week number
+// Calculate ISO week number and year
 #let week-number(year, month, day) = {
-  // Simplified week number calculation
-  let jan1 = day-of-week(year, 1, 1)
-  let days-since-jan1 = 0
+  let d = datetime(year: year, month: month, day: day)
+  let dow = day-of-week(year, month, day)
+  let nearest-thursday = d + duration(days: 3 - dow)
   
-  // Count days from January 1st
-  for m in range(1, month) {
-    days-since-jan1 = days-since-jan1 + days-in-month(year, m)
-  }
-  days-since-jan1 = days-since-jan1 + day
+  let iso-year = nearest-thursday.year()
+  let jan1-of-iso-year = datetime(year: iso-year, month: 1, day: 1)
   
-  // Calculate week number
-  calc.quo(days-since-jan1 + jan1 - 1, 7) + 1
+  // Find the Monday of week 1
+  let jan4 = datetime(year: iso-year, month: 1, day: 4)
+  let jan4-dow = day-of-week(iso-year, 1, 4)
+  let week1-monday = jan4 - duration(days: jan4-dow)
+  
+  let days-diff = (nearest-thursday - week1-monday).days()
+  let wk = calc.quo(days-diff, 7) + 1
+  
+  (year: iso-year, week: wk)
 }
 
-// Get all weeks in a month
-#let weeks-in-month(year, month) = {
-  let first-day = first-day-of-month(year, month)
-  let num-days = days-in-month(year, month)
+// Get the date of a Monday for a given ISO week
+#let date-from-iso-week(year, week-num) = {
+  // Find Jan 4th of the year (always in week 1)
+  let jan4 = datetime(year: year, month: 1, day: 4)
+  let jan4-dow = day-of-week(year, 1, 4)
   
-  // Calculate number of weeks needed
-  calc.quo(first-day + num-days - 1, 7) + 1
+  // Find Monday of Week 1
+  let week1-monday = jan4 - duration(days: jan4-dow)
+  
+  week1-monday + duration(days: (week-num - 1) * 7)
 }
 
-// Get date range for a week
-#let week-dates(year, week-num) = {
-  // Simplified: returns approximate dates for a week
-  // This would need more complex logic for exact ISO week dates
-  (year: year, week: week-num)
+// Get total ISO weeks in a year (52 or 53)
+#let weeks-in-year(year) = {
+  // A year has 53 weeks if Dec 28 is in week 53
+  week-number(year, 12, 28).week
 }
 
-// Check if a day is a weekend (Saturday or Sunday)
-#let is-weekend(year, month, day, start-day: "monday") = {
+// Get date range for a week (Monday to Sunday)
+#let week-range-dates(year, week-num) = {
+  let start-date = date-from-iso-week(year, week-num)
+  let end-date = start-date + duration(days: 6)
+  
+  (start: start-date, end: end-date)
+}
+
+// Check if a day is a weekend
+#let is-weekend(year, month, day, start-day: 0, config: none) = {
   let dow = day-of-week(year, month, day)
   
-  if start-day == "monday" {
-    dow == 5 or dow == 6  // Saturday or Sunday
-  } else {
-    dow == 6 or dow == 0  // Sunday or Monday (if week starts Sunday)
+  if config != none {
+    let wknd-days = config.week.at("weekendDays", default: ("saturday", "sunday"))
+    // Convert day names to indices for comparison
+    // dow: 0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday
+    let is-sat = dow == 5
+    let is-sun = dow == 6
+    let is-fri = dow == 4
+    
+    // Check if saturday or sunday are in weekend days
+    for wknd in wknd-days {
+      if wknd == "saturday" and is-sat { return true }
+      if wknd == "sunday" and is-sun { return true }
+      if wknd == "friday" and is-fri { return true }
+    }
+    return false
   }
+  
+  // Default to Sat/Sun
+  dow == 5 or dow == 6
+}
+
+// Get list of (year, month) pairs for a given range
+#let month-list(start-year, start-month, count) = {
+  let result = ()
+  for i in range(count) {
+    let m = start-month + i
+    let y = start-year + calc.quo(m - 1, 12)
+    let actual-m = calc.rem(m - 1, 12) + 1
+    result.push((year: y, month: actual-m))
+  }
+  result
+}
+
+// Get list of unique ISO weeks that touch a list of months
+#let week-list(month-data-list) = {
+  let result = ()
+  let seen = (:)
+  
+  for item in month-data-list {
+    let year = item.year
+    let month = item.month
+    let num-days = days-in-month(year, month)
+    
+    // Check every Monday in the month
+    for d in range(1, num-days + 1) {
+      let dow = day-of-week(year, month, d)
+      if dow == 0 or d == 1 or d == num-days { // Start of week, start of month, or end of month
+        let wk-data = week-number(year, month, d)
+        let key = str(wk-data.year) + "-" + str(wk-data.week)
+        if seen.at(key, default: false) == false {
+          result.push(wk-data)
+          seen.insert(key, true)
+        }
+      }
+    }
+  }
+  result
 }
 
 // Get quarter for a month (1-4)
@@ -110,4 +219,9 @@
 #let quarter-months(quarter) = {
   let start = (quarter - 1) * 3 + 1
   (start, start + 1, start + 2)
+}
+
+// Format number as two digits (DD)
+#let fmt-dd(num) = {
+  if num < 10 { "0" + str(num) } else { str(num) }
 }

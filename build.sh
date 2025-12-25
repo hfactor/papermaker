@@ -40,7 +40,11 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Extract year from config for output filename
-YEAR=$(grep -o '"year"[[:space:]]*:[[:space:]]*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*')
+# Try new format first (startYear), then fall back to old format (year)
+YEAR=$(grep -o '"startYear"[[:space:]]*:[[:space:]]*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*' || true)
+if [ -z "$YEAR" ]; then
+    YEAR=$(grep -o '"year"[[:space:]]*:[[:space:]]*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*' || true)
+fi
 if [ -z "$YEAR" ]; then
     YEAR="unknown"
 fi
@@ -62,12 +66,12 @@ cp "$CONFIG_FILE" "$TEMP_CONFIG"
 
 # Create temporary main.typ with correct config path
 TEMP_MAIN="templates/main_temp.typ"
-cat templates/main.typ | sed 's|"../examples/full-calendar.json"|"temp-config.json"|g' > "$TEMP_MAIN"
+cat templates/main.typ | sed 's|"../examples/full-calendar.json"|"temp-config.json"|g' | sed 's|"../examples/new-config.json"|"temp-config.json"|g' > "$TEMP_MAIN"
 
 echo -e "${YELLOW}Generating PDF...${NC}"
 
 # Compile with Typst from templates directory
-if (cd templates && typst compile main_temp.typ "../$OUTPUT_FILE" 2>&1); then
+if (cd templates && typst compile main_temp.typ "../$OUTPUT_FILE" --font-path ../fonts 2>&1); then
     # Clean up temp files
     rm "$TEMP_MAIN"
     rm "$TEMP_CONFIG"

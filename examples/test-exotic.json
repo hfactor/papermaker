@@ -1,0 +1,42 @@
+{
+    "pages": {
+        "cover": true,
+        "year": true,
+        "quarter": true,
+        "month": true,
+        "week": true,
+        "daily": true,
+        "extraDaily": true
+    },
+    "year": 2026,
+    "startMonth": 1,
+    "totalMonths": 3,
+    "pageOrder": "month-days",
+    "coverImage": "",
+    "startDay": 2,
+    "monthFormat": "first",
+    "dayFormat": "first",
+    "paperStyle": "dot",
+    "guides": "centre",
+    "showPageBorder": true,
+    "firstPageTitle": "EXOTIC TEST",
+    "style": {
+        "font": "Inter",
+        "headingFont": "Inter",
+        "baseFontSize": 11,
+        "headerSize": 16,
+        "titleSize": 30,
+        "primaryColor": "#3b82f6",
+        "secondaryColor": "#94a3b8",
+        "weekendColor": "#f1f5f9",
+        "bgColor": "#ffffff",
+        "headerColor": "#1e293b",
+        "patternColor": "#e2e8f0",
+        "linkColor": "#3b82f6",
+        "margin": 12,
+        "gridSpacing": 6,
+        "strokeWidth": 0.5,
+        "borderRadius": 4,
+        "cellHeight": 50
+    }
+}

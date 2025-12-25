@@ -1,18 +1,24 @@
 {
     "pages": {
+        "cover": true,
         "year": true,
         "quarter": true,
         "month": true,
         "week": true,
-        "daily": true
+        "daily": true,
+        "extraDaily": false
     },
-    "year": 2025,
+    "year": 2026,
+    "startMonth": 1,
+    "totalMonths": 12,
+    "pageOrder": "sequential",
+    "coverImage": "",
     "startDay": "monday",
     "weekendColor": "#e8f4f8",
     "monthFormat": "full",
     "paperStyle": "plain",
-    "font": "Inter",
+    "font": "Lato",
     "customFont": "",
     "primaryColor": "#000000",
-    "firstPageTitle": "My 2025 Calendar"
+    "firstPageTitle": "My 2026 Calendar"
 }

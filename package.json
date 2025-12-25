@@ -1,0 +1,27 @@
+{
+    "name": "pdf-calendar-generator",
+    "version": "1.0.0",
+    "description": "Configurable PDF calendar system for digital note-taking apps",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [
+        "calendar",
+        "pdf",
+        "typst",
+        "goodnotes",
+        "notability",
+        "remarkable"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}

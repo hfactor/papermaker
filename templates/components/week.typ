@@ -1,117 +1,107 @@
-// Weekly spread component - 7-day layout
+// Weekly spread component - SINGLE PAGE 7-day layout
 
 #import "../utils/dates.typ": *
 #import "../utils/hyperlinks.typ": *
 #import "../utils/styles.typ": *
 
-#let week-spread(config, year, month, start-day-num) = [
-  let primary-color = rgb(config.primaryColor)
-  let weekend-color = rgb(config.weekendColor)
-  let month-name = get-month-name(month, format: "abbreviated")
-  let num-days = days-in-month(year, month)
-  let wk-num = week-number(year, month, start-day-num)
+#let week-spread(config, year, week-num) = {
+  // Config is normalized to new format
+  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
+  let light1 = rgb(config.colors.at("light1", default: "#ffffff"))
+  let weekend-color = dark1.transparentize(60%)
+  let primary-font = config.typography.at("primaryFont", default: "Lato")
   
-  // Calculate the 7 days in this week
+  let iso-week-start = date-from-iso-week(year, week-num)
+  let start-day-idx = get-start-day-idx(config)
+  
   let week-days = ()
-  let current-month = month
-  let current-year = year
-  
   for i in range(7) {
-    let day = start-day-num + i
-    
-    // Handle month overflow
-    if day > num-days {
-      current-month = if month == 12 { 1 } else { month + 1 }
-      current-year = if month == 12 { year + 1 } else { year }
-      day = day - num-days
-    }
-    
+    let d = iso-week-start + duration(days: i)
     week-days.push((
-      year: current-year,
-      month: current-month,
-      day: day,
-      is-current-month: current-month == month
+      year: d.year(),
+      month: d.month(),
+      day: d.day(),
+      dow: calc.rem(d.weekday() - 1, 7)
     ))
   }
   
-  // Set page label
-  #page-label("week", year, week: wk-num)
+  let start-month-name = get-month-name(week-days.at(0).month, format: "abbreviated")
+  let end-month-name = get-month-name(week-days.at(6).month, format: "abbreviated")
+  let date-range = if start-month-name == end-month-name {
+    [#start-month-name #fmt-dd(week-days.at(0).day) - #fmt-dd(week-days.at(6).day), #str(year)]
+  } else {
+    [#start-month-name #fmt-dd(week-days.at(0).day) - #end-month-name #fmt-dd(week-days.at(6).day), #str(year)]
+  }
   
-  pagebreak(weak: true)
+  let start-h = int(config.planner.at("startTime", default: "08:00").slice(0, 2))
+  let end-h = int(config.planner.at("endTime", default: "20:00").slice(0, 2))
   
-  // Header
-  nav-header(
-    nav-link([← #month-name], "month", year, month: month, color: primary-color),
-    [Week #str(wk-num) - #str(year)],
-    color: primary-color
-  )
+  let first-day = week-days.at(0)
+  let month-name = get-month-name(first-day.month, format: "full")
   
-  v(1em)
-  divider(color: primary-color)
-  v(1.5em)
-  
-  // Vertical week layout
-  for day-info in week-days {
-    if day-info.is-current-month {
-      let day = day-info.day
-      let is-wknd = is-weekend(year, month, day, start-day: config.startDay)
-      let cell-bg = if is-wknd { weekend-color } else { white }
-      let dow = day-of-week(year, month, day)
+  [
+    #paper-block(config, force-plain: true, body: [
+      #nav-header(
+        config,
+        [], // Empty left
+        [
+          Week #str(week-num) - 
+          #nav-link(config, month-name, "month", year, month: first-day.month, color: dark1)
+          #nav-link(config, str(year), "year", year, color: dark1)
+        ],
+        color: dark1
+      )
       
-      let day-names = if config.startDay == "sunday" {
-        ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-      } else {
-        ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-      }
+      #v(4pt)
       
-      rect(
-        width: 100%,
-        height: 100pt,
-        fill: cell-bg,
-        stroke: 1pt + rgb("#d0d0d0"),
-        inset: 10pt
-      )[
-        #grid(
-          columns: (auto, 1fr),
-          gutter: 15pt,
+      #let stroke-w = config.typography.at("strokeWidth", default: 0.5) * 1pt
+      #grid(
+        columns: (1fr,) * 7,
+        rows: (1fr,),
+        column-gutter: 15pt,
+        
+        ..week-days.map(day-info => {
+          let is-wknd = is-weekend(day-info.year, day-info.month, day-info.day, config: config)
+          let cell-bg = if is-wknd { weekend-color } else { none }
+          let day-label = get-day-name(day-info.dow, format: "full")
+          let month-abbr = get-month-name(day-info.month, format: "abbreviated")
           
-          // Date header
-          align(horizon)[
-            #if config.pages.daily {
+          let header = align(top + left)[
+            #(if config.generation.pages.day.at("enabled", default: false) and day-info.year == year {
               nav-link(
-                text(size: 18pt, weight: "bold")[
-                  #day-names.at(dow) #str(day)
+                config,
+                text(font: primary-font, size: 10pt, weight: "bold")[
+                  #fmt-dd(day-info.day) #month-abbr
                 ],
                 "day",
-                year,
-                month: month,
-                day: day,
-                color: primary-color
+                day-info.year,
+                month: day-info.month,
+                day: day-info.day,
+                color: dark1
               )
             } else {
-              text(size: 18pt, weight: "bold", fill: primary-color)[
-                #day-names.at(dow) #str(day)
+              text(font: primary-font, size: 10pt, weight: "bold", fill: dark1)[
+                #fmt-dd(day-info.day) #month-abbr
               ]
-            }
-          ],
-          
-          // Space for notes (with paper style)
-          align(horizon)[
-            #if config.paperStyle != "plain" {
-              rect(
-                width: 100%,
-                height: 80pt,
-                stroke: 0.5pt + rgb("#e0e0e0"),
-                inset: 5pt
-              )[
-                // Paper background would go here
-              ]
-            }
+            })
+            #v(-3pt)
+            #text(size: 8pt, weight: "bold", fill: dark2.transparentize(40%))[#day-label]
           ]
-        )
-      ]
-      
-      v(8pt)
-    }
-  }
-]
+
+          planner-column(
+            config,
+            header,
+            start-h: safe-parse-hour(config.planner.at("startTime", default: "08:00")),
+            end-h: safe-parse-hour(config.planner.at("endTime", default: "20:00")),
+            show-divs: config.planner.at("showDivisions", default: false),
+            text-size: 6pt,
+            show-border: false,
+            gutter: 3pt
+          )
+        })
+      )
+    ])
+    #page-label("week", year, week: week-num)
+  ]
+}
