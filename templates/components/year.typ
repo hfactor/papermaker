@@ -9,7 +9,11 @@
 #let year-calendar(config) = {
   let year = config.timeRange.startYear
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let weekend-color = dark1.transparentize(95%)
+  let weekend-color = if config.colors.at("weekendHighlight", default: none) != none {
+     rgb(config.colors.weekendHighlight).transparentize(85%)
+  } else {
+     rgb(config.colors.at("light2", default: "#f4f4f5")).transparentize(85%)
+  }
   let primary-font = config.typography.at("primaryFont", default: "Inter")
   let primary-weight = config.typography.at("primaryFontWeight", default: 700)
   let secondary-font = config.typography.at("secondaryFont", default: "Inter")

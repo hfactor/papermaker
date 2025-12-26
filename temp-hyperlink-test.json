@@ -1,0 +1,56 @@
+{
+    "timeRange": {
+        "startYear": 2026,
+        "startMonth": 1,
+        "durationMonths": 3
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "landscape"
+    },
+    "colors": {
+        "dark1": "#000000",
+        "light1": "#ffffff",
+        "accent": "#4f46e5"
+    },
+    "typography": {
+        "primaryFont": "Inter",
+        "primaryFontWeight": 700,
+        "secondaryFont": "Inter",
+        "secondaryFontWeight": 400,
+        "fontScale": 1.0
+    },
+    "planner": {
+        "paperStyle": "line",
+        "density": "balanced",
+        "weekStart": 1,
+        "weekendType": "sat-sun",
+        "weekendDays": [
+            5,
+            6
+        ]
+    },
+    "generation": {
+        "order": "sequential",
+        "pages": {
+            "cover": {
+                "enabled": false
+            },
+            "year": {
+                "enabled": true
+            },
+            "quarter": {
+                "enabled": false
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": false
+            },
+            "day": {
+                "enabled": false
+            }
+        }
+    }
+}

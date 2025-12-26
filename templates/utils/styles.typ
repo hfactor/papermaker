@@ -44,12 +44,12 @@
   
   // Use light2 for grid highlights if applicable
   
-  // Density mapping
+  // Density mapping - tighter spacing for dots
   let dens = plan-conf.at("density", default: "balanced")
   let base-spacing = if type(dens) == int { dens * 1mm }
-                    else if dens == "compact" { 5.5mm }
-                    else if dens == "spaced" { 10mm }
-                    else { 7.5mm } // balanced
+                    else if dens == "compact" { 4mm }      // Tighter for dots
+                    else if dens == "spaced" { 8mm }       // Tighter for dots
+                    else { 5.5mm } // balanced - tighter for dots
   
   if "gridSpacing" in plan-conf {
     let gs = plan-conf.gridSpacing
@@ -75,7 +75,7 @@
     ]
   } else if style == "dot" {
     tiling(size: (sx, sy))[
-      #place(center + horizon, circle(radius: stroke-w * 1.2, fill: color.darken(40%)))
+      #place(center + horizon, circle(radius: stroke-w * 3, fill: dark2))  // Solid, larger dots
     ]
   } else if style == "line" {
     tiling(size: (sx, sy))[
@@ -226,6 +226,13 @@
   
   let sh = if type(start-h) == int { start-h } else { 8 }
   let eh = if type(end-h) == int { end-h } else { 20 }
+  
+  // Validate: start must be less than end
+  if sh >= eh {
+    let temp = sh
+    sh = eh
+    eh = temp
+  }
   
   let hours = range(sh, eh + 1)
   let row-count = if show-divs { 

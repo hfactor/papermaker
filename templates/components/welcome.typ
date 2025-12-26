@@ -5,6 +5,7 @@
 
 #let welcome-page(config) = {
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let accent = rgb(config.colors.at("accent", default: "#3e63dd"))
   let primary-font = config.typography.at("primaryFont", default: "Inter")
   let primary-weight = config.typography.at("primaryFontWeight", default: 700)
   let secondary-font = config.typography.at("secondaryFont", default: "Inter")
@@ -17,58 +18,60 @@
       breadcrumbs: (),
       sidebar-content: none,
       body: align(center + horizon)[
-  #block(
-    width: 100%,
-    inset: 24pt,
-    radius: 8pt
-  )[
+        #v(15%) // Add top padding
+        #block(
+          width: 60%, // 40% padding (20% on each side)
+          inset: 0pt
+        )[
           #set align(left)
-          #text(font: primary-font, size: 2em, weight: primary-weight)[About this planner]
-          #v(2.5em)
-          
-          #set text(size: 11pt)
-          #set par(leading: 1em)
-          #text(font: secondary-font, weight: secondary-weight)[
-            This planner was generated using *PaperMaker*, a small open source tool that creates linked PDF planners based on the options you choose.
-          ]
-          
+          #text(font: primary-font, size: 1.8em, weight: primary-weight)[About this planner]
           #v(1.5em)
+          
+          #set text(size: 10.5pt)
+          #set par(leading: 0.85em, justify: false)
           #text(font: secondary-font, weight: secondary-weight)[
-            The links inside this file only exist for the views you selected during generation. If you created month, week, or quarter pages, you will see links for them. If something is missing, it was not part of your configuration – you can always generate a new version with the sections you want.
+            PaperMaker lets you pick the pages you need and customize them, and then it creates a planner like this one for you. You choose the structure, the sections, and the look, and it turns that into a single PDF.
           ]
           
-          #v(1.5em)
+          #v(1.2em)
           #text(font: secondary-font, weight: secondary-weight)[
-            Optimized for PDF annotation apps like *GoodNotes*, *Notability*, or *reMarkable*. 
+            Based on what was generated, the pages are connected with links so you can move around by tapping instead of scrolling. This makes it easier to move between days, weeks, months, or any other sections that are present in this file.
           ]
           
-          #v(5em)
+          #v(1.2em)
+          #text(font: secondary-font, weight: secondary-weight)[
+            If you ever want a different setup, you can always generate another version from PaperMaker and keep the one that feels right for you.
+          ]
+          
+          #v(3em)
+          
+          // Credits section
+          #text(font: primary-font, size: 0.9em, weight: primary-weight)[Credits]
+          #v(0.8em)
+          
           #grid(
-            columns: (1fr, 1fr, 1fr, 1fr),
-            column-gutter: 1.5em,
+            columns: (1fr, 1fr, 1fr, 1fr, 1fr),
+            column-gutter: 10pt,
+            row-gutter: 5pt,
             [
-              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(50%))[PAPERMAKER] \
-              #v(0.4em)
-              #text(size: 9pt)[Hiran Venugopalan \
-              #link("https://github.com/hiranv/papertools")[Source Page]]
+              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(40%))[Created by] \
+              #link("https://hiran.in")[#underline(text(size: 8pt, fill: accent)[Hiran Venugopalan])]
             ],
             [
-              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(50%))[ENGINE] \
-              #v(0.4em)
-              #text(size: 9pt)[Built with Typst \
-              #link("https://typst.app")[typst.app]]
+              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(40%))[License] \
+              #link("https://www.gnu.org/licenses/agpl-3.0.en.html")[#underline(text(size: 8pt, fill: accent)[AGPL V3.0])]
             ],
             [
-              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(50%))[PRIMARY] \
-              #v(0.4em)
-              #text(size: 9pt)[#primary-font \
-              #link("https://fonts.google.com/?query=" + primary-font.replace(" ", "+"))[Library]]
+              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(40%))[Build using] \
+              #link("https://typst.app")[#underline(text(size: 8pt, fill: accent)[Typst])]
             ],
             [
-               #text(size: 8pt, weight: "bold", fill: dark1.transparentize(50%))[SECONDARY] \
-               #v(0.4em)
-               #text(size: 9pt)[#secondary-font \
-               #link("https://fonts.google.com/?query=" + secondary-font.replace(" ", "+"))[Library]]
+              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(40%))[Primary font] \
+              #link("https://fonts.google.com/specimen/" + config.typography.primaryFont.replace(" ", "+"))[#underline(text(size: 8pt, fill: accent)[#config.typography.primaryFont])]
+            ],
+            [
+              #text(size: 8pt, weight: "bold", fill: dark1.transparentize(40%))[Secondary font] \
+              #link("https://fonts.google.com/specimen/" + config.typography.secondaryFont.replace(" ", "+"))[#underline(text(size: 8pt, fill: accent)[#config.typography.secondaryFont])]
             ]
           )
         ]

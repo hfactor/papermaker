@@ -41,6 +41,7 @@
     paperStyle: safe-get(d, "paperStyle", "line"),
     density: safe-get(d, "density", "balanced"),
     weekStart: safe-get(d, "weekStart", 1),
+    weekendType: safe-get(d, "weekendType", "sat-sun"),
     weekendDays: safe-get(d, "weekendDays", (0, 6))
   )
   
@@ -59,10 +60,12 @@
     print: sanitize-print(safe-dict(config, "print"))
   )
   
-  // 2. Week derived settings
+  // 2. Week derived settings - convert from web format to Typst format
   if safe-get(config, "week", none) == none { 
     let ws = config.planner.weekStart
-    config += (week: (startDay: if ws == 1 { "monday" } else { "sunday" })) 
+    // Convert from web format (0=Sun, 1=Mon, ..., 6=Sat) to Typst format (0=Mon, ..., 6=Sun)
+    let typst-start-day = if ws == 0 { 6 } else { ws - 1 }
+    config += (week: (startDay: typst-start-day)) 
   }
   if safe-get(config, "generation", none) == none { config += (generation: (order: "sequential", pages: (:))) }
 

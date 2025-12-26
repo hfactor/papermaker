@@ -24,7 +24,7 @@
   let months = quarter-months(quarter, fiscal-offset: fiscal-offset)
   
   let breadcrumbs = (
-    nav-link(config, str(year), "year", year),
+    nav-link(config, str(year), "year", year, color: dark1),
   )
   
   let title = "Quarter " + str(quarter) + " " + str(year)
@@ -70,7 +70,7 @@
               })
             )
           ],
-          paper-block(config, show-guides: true, override-layout: "line")
+          paper-block(config, show-guides: true)
         )
       ]
     })
@@ -98,7 +98,9 @@
             #v(5pt)
             #table(
               columns: (1fr,) * 7,
-              rows: (11.5pt,) * 7,
+              rows: (15pt,) * 7,  // Wider rows than year (13.5pt)
+              column-gutter: 1.5pt,  // Slightly more gutter
+              row-gutter: 1.5pt,
               stroke: none,
               fill: (x, y) => {
                 let day-idx = (y - 1) * 7 + x - offset + 1
@@ -109,16 +111,16 @@
               },
               inset: 0pt,
               align: center + horizon,
-              ..headers.map(h => text(font: secondary-font, size: 4.5pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#h]),
+              ..headers.map(h => text(font: secondary-font, size: 5pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#h]),
               ..range(7 * 6).map(i => {
                 let day-idx = i - offset + 1
                 if day-idx >= 1 and day-idx <= num-days {
-                  nav-link(config, text(font: secondary-font, size: 6.5pt, weight: secondary-weight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: dark1)
+                  nav-link(config, text(font: secondary-font, size: 7pt, weight: secondary-weight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: dark1)
                 } else { [] }
               })
             )
             #v(15pt)
-            #paper-block(config, show-guides: true, override-layout: "line")
+            #paper-block(config, show-guides: true)
           ]
         })
       )

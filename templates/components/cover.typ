@@ -15,9 +15,9 @@
   page(margin: 40pt, fill: rgb(config.colors.at("light1", default: "#ffffff")))[
     #set text(fill: dark1)
     #align(center + horizon)[
-      #if cover-image != "" [
+      #if cover-conf.at("imageUrl", default: "") != "" [
         #rect(width: 70%, height: 40%, stroke: none, fill: none)[
-           #image(cover-image, width: 100%, height: 100%, fit: "contain")
+           #image(cover-conf.imageUrl, width: 100%, height: 100%, fit: "contain")
         ]
         #v(2.5em)
       ] else [
@@ -26,8 +26,6 @@
       
       #if title != "" [
         #text(font: primary-font, size: title-sz * 2, weight: primary-weight)[#title]
-        #v(1em)
-        #text(font: primary-font, size: title-sz, weight: primary-weight, fill: dark1.transparentize(50%))[#str(year)]
       ] else [
         #text(font: primary-font, size: title-sz * 3, weight: primary-weight)[#str(year)]
       ]

@@ -39,14 +39,17 @@ class PaperMaker {
 
     getDefaultConfig() {
         return {
-            timeRange: { startYear: 2025, startMonth: 1, durationMonths: 12 },
-            output: { pageSize: 'a4', orientation: 'landscape' },
+            timeRange: {
+                startYear: 2026,
+                startMonth: 1,
+                durationMonths: 12
+            }, output: { pageSize: 'a4', orientation: 'landscape' },
             colors: { dark1: '#18181b', light1: '#ffffff', accent: '#4f46e5' },
             typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400, fontScale: 1.0, titleSize: 24 },
             generation: {
                 order: 'sequential',
                 pages: {
-                    cover: { enabled: false, title: '', imageUrl: '' },
+                    cover: { enabled: false, title: 'PaperMaker Planner', imageUrl: '' },
                     year: { enabled: true },
                     quarter: { enabled: false, type: 'calendar' },
                     month: { enabled: true },
@@ -76,7 +79,14 @@ class PaperMaker {
         document.querySelectorAll('#customWeekendDays input').forEach(cb => {
             cb.addEventListener('change', () => {
                 const checked = Array.from(document.querySelectorAll('#customWeekendDays input:checked')).map(c => parseInt(c.value));
-                this.config.planner.weekendDays = checked;
+                // Convert from Sunday-based (0=Sun, 1=Mon, ..., 6=Sat) to Monday-based (0=Mon, ..., 6=Sun)
+                // Web: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+                // Typst: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+                const convertedDays = checked.map(day => {
+                    if (day === 0) return 6; // Sunday: 0 -> 6
+                    return day - 1;          // Mon-Sat: 1-6 -> 0-5
+                });
+                this.config.planner.weekendDays = convertedDays;
                 this.saveState();
                 this.updatePageCount();
             });
@@ -91,8 +101,14 @@ class PaperMaker {
 
         // Step 2 Details
         document.getElementById('quarterType')?.addEventListener('change', (e) => this.update('quarterType', e.target.value));
-        document.getElementById('coverTitle')?.addEventListener('input', (e) => this.update('coverTitle', e.target.value));
-        document.getElementById('coverImageUrl')?.addEventListener('input', (e) => this.update('coverImageUrl', e.target.value));
+        document.getElementById('coverTitle')?.addEventListener('input', (e) => this.updateConfig('coverTitle', e.target.value));
+        document.getElementById('clearImageBtn')?.addEventListener('click', () => {
+            const fileInput = document.getElementById('coverImageFile');
+            const label = document.getElementById('uploadLabel');
+            if (fileInput) fileInput.value = '';
+            if (label) label.textContent = 'Choose Image...';
+            this.update('coverImageUrl', '');
+        });
         document.getElementById('includeSidebar')?.addEventListener('change', (e) => this.update('includeSidebar', e.target.checked));
         document.getElementById('sidebarModule')?.addEventListener('change', (e) => this.update('sidebarModule', e.target.value));
 
@@ -188,10 +204,9 @@ class PaperMaker {
                 });
                 const result = await response.json();
                 if (result.success) {
-                    this.config.generation.pages.cover.imageUrl = result.url;
+                    this.update('coverImageUrl', result.url);
                     if (label) label.innerText = `Uploaded: ${file.name}`;
                     if (trigger) trigger.classList.add('has-file');
-                    this.saveState();
                     this.showToast('Cover image uploaded');
                 }
             } catch (err) {
@@ -262,7 +277,15 @@ class PaperMaker {
 
             case 'includeCover': c.generation.pages.cover.enabled = val; break;
             case 'coverTitle': c.generation.pages.cover.title = val; break;
-            case 'coverImageUrl': c.generation.pages.cover.imageUrl = val; break;
+            case 'coverImageUrl':
+                c.generation.pages.cover.imageUrl = val;
+                // Clear image preview if URL is empty
+                if (!val || val.trim() === '') {
+                    c.generation.pages.cover.imageUrl = '';
+                    const preview = document.getElementById('coverImagePreview');
+                    if (preview) preview.src = '';
+                }
+                break;
             case 'includeYear': c.generation.pages.year.enabled = val; break;
             case 'includeQuarter': c.generation.pages.quarter.enabled = val; break;
             case 'quarterType': c.generation.pages.quarter.type = val; break;
@@ -322,15 +345,31 @@ class PaperMaker {
 
     setStep(n) {
         this.currentStep = n;
-        document.querySelectorAll('.wizard-step').forEach((s, idx) => s.classList.toggle('visible', idx + 1 === n));
+        document.querySelectorAll('.wizard-step').forEach((s, i) => {
+            const stepNum = i + 1;
+            s.style.display = stepNum === n ? 'block' : 'none';
+            s.classList.toggle('active', stepNum === n);
+            s.classList.toggle('done', stepNum < n);
+        });
         document.querySelectorAll('.step-indicator').forEach((s, idx) => {
             const stepNum = idx + 1;
             s.classList.toggle('active', stepNum === n);
             s.classList.toggle('done', stepNum < n);
         });
         document.getElementById('prevBtn').disabled = n === 1;
-        document.getElementById('nextBtn').innerText = n === 3 ? 'Build Planner' : 'Continue \u2192';
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.innerText = n === 3 ? 'Build Planner' : 'Continue →';
+
+        // Disable build button if on step 3 and no pages selected
+        if (n === 3) {
+            const count = parseInt(document.getElementById('pageCount')?.textContent || '0');
+            nextBtn.disabled = count === 0;
+        }
+
         document.querySelector('.wizard-content')?.scrollTo(0, 0);
+        this.syncUI();
+        this.saveState();
+        this.updateSummary();
     }
 
     applyPreset(id) {
@@ -360,7 +399,7 @@ class PaperMaker {
 
         setC('includeCover', c.generation.pages.cover.enabled);
         setV('coverTitle', c.generation.pages.cover.title);
-        setV('coverImageUrl', c.generation.pages.cover.imageUrl);
+
         setC('includeYear', c.generation.pages.year.enabled);
         setC('includeQuarter', c.generation.pages.quarter.enabled);
         setV('quarterType', c.generation.pages.quarter.type);
@@ -421,7 +460,20 @@ class PaperMaker {
 
         if (c.planner.weekendType === 'custom') {
             document.querySelectorAll('#customWeekendDays input').forEach(cb => {
-                cb.checked = (c.planner.weekendDays || []).includes(parseInt(cb.value));
+                const webDay = parseInt(cb.value); // 0=Sun, 1=Mon, ..., 6=Sat
+                // Convert from Typst format (0=Mon, ..., 6=Sun) to web format
+                const typstDays = c.planner.weekendDays || [];
+                let isChecked = false;
+
+                if (webDay === 0) {
+                    // Sunday in web = 6 in Typst
+                    isChecked = typstDays.includes(6);
+                } else {
+                    // Mon-Sat in web (1-6) = 0-5 in Typst
+                    isChecked = typstDays.includes(webDay - 1);
+                }
+
+                cb.checked = isChecked;
             });
         }
     }
@@ -450,19 +502,35 @@ class PaperMaker {
     }
 
     updatePageCount() {
+        const c = this.config;
+        const dur = c.timeRange.durationMonths;
         let count = 0;
-        const dur = this.config.timeRange.durationMonths || 0;
-        if (this.config.generation.pages.cover.enabled) count += 1;
-        count += 1; // Welcome
-        if (this.config.generation.pages.year.enabled) count += Math.ceil(dur / 12);
-        if (this.config.generation.pages.quarter.enabled) count += Math.ceil(dur / 3);
-        if (this.config.generation.pages.month.enabled) count += dur;
-        if (this.config.generation.pages.week.enabled) count += Math.ceil((dur * 30.4) / 7);
-        if (this.config.generation.pages.day.enabled) {
-            count += Math.floor(dur * 30.4) * (this.config.generation.pages.day.extraDaily ? 2 : 1);
+
+        // Count cover page if enabled
+        if (c.generation.pages.cover.enabled) count += 1;
+
+        if (c.generation.pages.year.enabled) count += 1;
+        if (c.generation.pages.quarter.enabled) count += Math.ceil(dur / 3);
+        if (c.generation.pages.month.enabled) count += dur;
+
+        if (c.generation.pages.week.enabled) {
+            count += Math.ceil((dur * 30.4) / 7);
         }
+
+        if (c.generation.pages.day.enabled) {
+            const daysPerYear = 365;
+            const totalDays = Math.floor((dur / 12) * daysPerYear);
+            count += totalDays * (c.generation.pages.day.extraDaily ? 2 : 1);
+        }
+
         const pcEl = document.getElementById('pageCount');
-        if (pcEl) pcEl.innerText = count;
+        if (pcEl) pcEl.textContent = count;
+
+        // Disable build button if on step 3 and no pages selected
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn && this.currentStep === 3) {
+            nextBtn.disabled = count === 0;
+        }
     }
 
     async generatePDF() {
@@ -488,7 +556,7 @@ class PaperMaker {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                this.showToast('Bespoke PDF built & downloaded');
+                this.showToast('File Successfully Downloaded', 'success');
             } else throw new Error(data.error);
         } catch (e) {
             this.showToast('Build failed. Check config.');
@@ -506,8 +574,15 @@ class PaperMaker {
         setTimeout(() => t.style.transform = 'translate(-50%, 6.25rem)', 3500);
     }
 
-    saveState() { localStorage.setItem('papermaker_v7_4_state', JSON.stringify(this.config)); }
-    loadState() { return JSON.parse(localStorage.getItem('papermaker_v7_4_state')); }
+    saveState() {
+        // Create a copy without imageUrl (don't persist images)
+        const configToSave = JSON.parse(JSON.stringify(this.config));
+        if (configToSave.generation?.pages?.cover) {
+            delete configToSave.generation.pages.cover.imageUrl;
+        }
+        localStorage.setItem('papermaker-config', JSON.stringify(configToSave));
+    }
+    loadState() { return JSON.parse(localStorage.getItem('papermaker-config')); }
 }
 
 document.addEventListener('DOMContentLoaded', () => { window.app = new PaperMaker(); });

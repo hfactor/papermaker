@@ -37,7 +37,7 @@
                 </ul>
                 <div class="page-count-display">
                     <span class="num" id="pageCount">0</span>
-                    <span class="unit">Total Pages</span>
+                    <span class="unit">Total Pages + Help</span>
                 </div>
             </div>
 
@@ -84,7 +84,7 @@
                                 <input type="number" id="startYear" value="2025">
                             </div>
                             <div class="field">
-                                <label>Month</label>
+                                <label for="startMonth">Starting Month</label>
                                 <select id="startMonth">
                                     <option value="1">Jan</option>
                                     <option value="2">Feb</option>
@@ -109,8 +109,13 @@
                             <div class="field">
                                 <label>Week Starts</label>
                                 <select id="weekStart">
-                                    <option value="1">Monday</option>
                                     <option value="0">Sunday</option>
+                                    <option value="1" selected>Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5">Friday</option>
+                                    <option value="6">Saturday</option>
                                 </select>
                             </div>
                             <div class="field">
@@ -246,12 +251,18 @@
                             <div class="sub-label" style="margin-bottom: 0.5rem;">Front Cover</div>
                             <div class="field-row">
                                 <div class="field"><label>Title</label><input type="text" id="coverTitle"
-                                        placeholder="Year 2025"></div>
-                                <div class="field"><label>Cover Image</label>
-                                    <input type="file" id="coverImageFile" accept="image/*" style="display: none;">
-                                    <div class="upload-trigger"
-                                        onclick="document.getElementById('coverImageFile').click()">
-                                        <span id="uploadLabel">Upload Image...</span>
+                                        placeholder="PaperMaker Planner"></div>
+                                <div class="field">
+                                    <label>Cover Image</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="file" id="coverImageFile" accept="image/*" style="display: none;">
+                                        <button type="button"
+                                            onclick="document.getElementById('coverImageFile').click()"
+                                            style="flex: 1; padding: 0.625rem 0.75rem; background: #fff; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: left; font-size: 0.875rem; color: var(--text-secondary);">
+                                            <span id="uploadLabel">Choose Image...</span>
+                                        </button>
+                                        <button type="button" id="clearImageBtn"
+                                            style="padding: 0.625rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Clear</button>
                                     </div>
                                 </div>
                             </div>
@@ -293,7 +304,8 @@
                                             <label>Side</label>
                                             <div class="choice-row" data-id="sidebarPosition">
                                                 <div class="choice-item" data-value="left">Left</div>
-                                                <div class="choice-item active" data-value="right">Right</div>
+                                                <div class="choice-item active" data-value="right">Right
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -304,14 +316,16 @@
                                                 <label>Format</label>
                                                 <div class="choice-row" data-id="timeFormat">
                                                     <div class="choice-item" data-value="12h">12h</div>
-                                                    <div class="choice-item active" data-value="24h">24h</div>
+                                                    <div class="choice-item active" data-value="24h">24h
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="field">
                                                 <label>Show 30-min Intervals</label>
                                                 <div class="choice-row" data-id="showHalfHour">
                                                     <div class="choice-item" data-value="true">Show</div>
-                                                    <div class="choice-item active" data-value="false">Hide</div>
+                                                    <div class="choice-item active" data-value="false">Hide
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -389,7 +403,7 @@
                                     </div>
                                 </div>
                                 <div class="color-item">
-                                    <span class="name">Accent Color</span>
+                                    <span class="name">Accent (Used with Opacity)</span>
                                     <div class="color-input-group">
                                         <div class="c-unit"><input type="color" id="colorAccent"></div>
                                         <input type="text" class="hex-input" id="hex-colorAccent">

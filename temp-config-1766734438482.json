@@ -1,0 +1,72 @@
+{
+  "timeRange": {
+    "startYear": 2025,
+    "startMonth": 1,
+    "durationMonths": 12
+  },
+  "output": {
+    "pageSize": "a4",
+    "orientation": "landscape"
+  },
+  "colors": {
+    "dark1": "#ffffff",
+    "dark2": "#78350f",
+    "light1": "#09090b",
+    "light2": "#fef3c7",
+    "accent": "#4f46e5"
+  },
+  "typography": {
+    "primaryFont": "Inter",
+    "primaryFontWeight": 700,
+    "secondaryFont": "Inter",
+    "secondaryFontWeight": 400,
+    "fontScale": 1,
+    "titleSize": 24
+  },
+  "generation": {
+    "order": "sequential",
+    "pages": {
+      "cover": {
+        "enabled": true,
+        "title": "Year 2025",
+        "imageUrl": "/uploads/upload-1766734234255.jpg"
+      },
+      "year": {
+        "enabled": true
+      },
+      "quarter": {
+        "enabled": true,
+        "type": "calendar"
+      },
+      "month": {
+        "enabled": true
+      },
+      "week": {
+        "enabled": true
+      },
+      "day": {
+        "enabled": true,
+        "extraDaily": true,
+        "sidebar": "left",
+        "sidebarEnabled": true,
+        "sidebarModule": "planner",
+        "startTime": "01:00",
+        "endTime": "15:00",
+        "timeFormat": "24h",
+        "showHalfHour": true
+      }
+    }
+  },
+  "planner": {
+    "paperStyle": "grid",
+    "density": "balanced",
+    "weekStart": 1,
+    "weekendType": "custom",
+    "weekendDays": [
+      0,
+      2,
+      4,
+      5
+    ]
+  }
+}

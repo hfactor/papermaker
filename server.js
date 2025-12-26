@@ -19,6 +19,32 @@ app.use('/uploads', express.static('uploads'));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
 
+// Download image helper
+async function downloadImage(url, filepath) {
+    const https = require('https');
+    const http = require('http');
+
+    return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https') ? https : http;
+        const file = fs.createWriteStream(filepath);
+
+        protocol.get(url, (response) => {
+            if (response.statusCode !== 200) {
+                reject(new Error(`Failed to download: ${response.statusCode}`));
+                return;
+            }
+            response.pipe(file);
+            file.on('finish', () => {
+                file.close();
+                resolve();
+            });
+        }).on('error', (err) => {
+            fs.unlink(filepath, () => { });
+            reject(err);
+        });
+    });
+}
+
 // Automatic cleanup: Delete files in output/ older than 1 hour
 function cleanupOutput() {
     const outputDir = path.join(__dirname, 'output');
@@ -83,12 +109,36 @@ app.post('/generate-pdf', async (req, res) => {
             }
         }
 
-        // 2. Write config
+        // 2. Download cover image if provided
+        const imageUrl = config.generation?.pages?.cover?.imageUrl;
+        if (imageUrl && imageUrl.trim() !== '' && imageUrl !== 'undefined') {
+            // Ensure cache directory exists
+            const cacheDir = path.join(__dirname, 'cache');
+            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+            const imagePath = path.join(cacheDir, `cover-${timestamp}.png`);
+
+            try {
+                await downloadImage(imageUrl, imagePath);
+                config.generation.pages.cover.image = imagePath;
+                console.log('[Image] Downloaded cover image:', imagePath);
+            } catch (err) {
+                console.error('[Image] Failed to download:', err.message);
+                delete config.generation.pages.cover.image;
+            }
+        } else {
+            // No valid image URL, ensure image field is not set
+            if (config.generation?.pages?.cover) {
+                delete config.generation.pages.cover.image;
+            }
+        }
+
+        // 3. Write config
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
         console.log(`[Build] Starting PDF generation for ${year}...`);
 
-        // 3. Run build script
+        // 4. Run build script
         exec(`./build.sh "${configPath}" "${outputBaseName}"`, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
             // Cleanup temp config immediately
             fs.unlink(configPath, () => { });

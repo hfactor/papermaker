@@ -50,7 +50,7 @@
           dir: ttb,
           spacing: 8pt,
           if breadcrumbs.len() > 0 {
-            text(font: secondary-font, size: 11pt, weight: secondary-weight, fill: accent.transparentize(20%))[
+            text(font: secondary-font, size: 11pt, weight: secondary-weight, fill: dark1)[
               #breadcrumb(config, breadcrumbs)
             ]
           },

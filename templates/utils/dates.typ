@@ -105,17 +105,19 @@
 #let week-number(year, month, day) = {
   let d = datetime(year: year, month: month, day: day)
   let dow = day-of-week(year, month, day)
-  let nearest-thursday = d + duration(days: 3 - dow)
+  // Find Thursday of this week (ISO week belongs to year containing Thursday)
+  // dow: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+  // Thursday is dow=3, so we need to add (3 - dow) days
+  // But for Fri/Sat/Sun (4,5,6), this gives negative, so we go to NEXT week's Thursday
+  let days-to-thursday = 3 - dow
+  let thursday = d + duration(days: days-to-thursday)
   
-  let iso-year = nearest-thursday.year()
-  let jan1-of-iso-year = datetime(year: iso-year, month: 1, day: 1)
-  
-  // Find the Monday of week 1
+  let iso-year = thursday.year()
   let jan4 = datetime(year: iso-year, month: 1, day: 4)
   let jan4-dow = day-of-week(iso-year, 1, 4)
   let week1-monday = jan4 - duration(days: jan4-dow)
   
-  let days-diff = (nearest-thursday - week1-monday).days()
+  let days-diff = (thursday - week1-monday).days()
   let wk = calc.quo(days-diff, 7) + 1
   
   (year: iso-year, week: wk)
@@ -152,15 +154,17 @@
   let dow = day-of-week(year, month, day)
   
   if config != none {
-    let is-sat = dow == 5
-    let is-sun = dow == 6
-    let is-fri = dow == 4
-    
     let type = config.planner.at("weekendType", default: "sat-sun")
-    if type == "sat-sun" { return is-sat or is-sun }
-    if type == "fri-sat" { return is-fri or is-sat }
-    // Custom case - default to Sat/Sun for now
-    return is-sat or is-sun
+    
+    if type == "sat-sun" { 
+      return dow == 5 or dow == 6  // Saturday or Sunday
+    } else if type == "fri-sat" { 
+      return dow == 4 or dow == 5  // Friday or Saturday
+    } else if type == "custom" {
+      // Use custom weekend days array
+      let weekend-days = config.planner.at("weekendDays", default: (0, 6))
+      return weekend-days.contains(dow)
+    }
   }
   
   // Default to Sat/Sun

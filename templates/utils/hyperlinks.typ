@@ -84,5 +84,5 @@
     label("day-" + str(year) + "-" + str(month) + "-" + str(day))
   }
   
-  link(target)[#text(fill: color)[#content]]
+  link(target, text(fill: color)[#content])
 }

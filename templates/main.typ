@@ -113,9 +113,6 @@
   if quarter-enabled {
     for q in quarters-to-gen { pagebreak(weak: true); quarter-spread(config, q.quarter, year: q.year) }
   }
-  if week-enabled {
-    for w in weeks-to-gen { pagebreak(weak: true); week-spread(config, w.year, w.week) }
-  }
   for m in months-to-gen {
     if month-enabled { pagebreak(weak: true); month-spread(config, m.month, year: m.year) }
     if day-enabled {
@@ -126,6 +123,9 @@
         }
       }
     }
+  }
+  if week-enabled {
+    for w in weeks-to-gen { pagebreak(weak: true); week-spread(config, w.year, w.week) }
   }
 } else if page-order == "week-days" {
   if quarter-enabled {

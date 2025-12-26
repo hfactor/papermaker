@@ -44,7 +44,6 @@
   let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
   let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
   
-  let light2 = rgb(config.colors.at("light2", default: "#f4f4f5"))
   let border-stroke = sw + dark2.transparentize(80%)
   
   let border = if position == "left" { (right: border-stroke) } 
@@ -54,7 +53,7 @@
   block(
     width: 100%,
     height: 100%,
-    fill: light2,
+    fill: none,  // Remove background fill
     stroke: border,
     inset: (x: 10pt, y: 0pt)
   )[#content]

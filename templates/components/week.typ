@@ -6,6 +6,11 @@
 
 #let week-spread(config, year, week-num) = {
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let weekend-fill = if config.colors.at("weekendHighlight", default: none) != none {
+     rgb(config.colors.weekendHighlight).transparentize(85%)
+  } else {
+     rgb(config.colors.at("light2", default: "#f4f4f5")).transparentize(85%)
+  }
   let primary-font = config.typography.at("primaryFont", default: "Inter")
   let primary-weight = config.typography.at("primaryFontWeight", default: 700)
   let secondary-font = config.typography.at("secondaryFont", default: "Inter")
@@ -22,11 +27,14 @@
   let q = get-quarter(week-days.at(0).month)
   
   let breadcrumbs = (
-    nav-link(config, m-name, "month", year, month: week-days.at(0).month),
-    nav-link(config, str(year), "year", year),
+    nav-link(config, m-name, "month", year, month: week-days.at(0).month, color: dark1),
+    nav-link(config, str(year), "year", year, color: dark1),
   )
   if config.generation.pages.quarter.enabled {
-    breadcrumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q))
+    breadcrumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q, color: dark1))
+  }
+  if config.generation.pages.week.enabled {
+    breadcrumbs.push(nav-link(config, "W" + str(week-num), "week", year, week: week-num, color: dark1))
   }
   
   let title = "Week " + str(week-num)
@@ -49,17 +57,27 @@
         #v(-3pt)
         #text(font: secondary-font, size: 8pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#get-day-name(day-info.dow, format: "full")]
       ]
-
-      planner-column(
-        config,
-        header,
-        start-h: safe-parse-hour(config.planner.at("startTime", default: "08:00")),
-        end-h: safe-parse-hour(config.planner.at("endTime", default: "20:00")),
-        show-divs: config.planner.at("showDivisions", default: false),
-        text-size: 6pt,
-        show-border: false,
-        gutter: 3pt
-      )
+      
+      // Add weekend background color
+      let is-weekend-day = is-weekend(day-info.year, day-info.month, day-info.day, config: config)
+      
+      block(
+        width: 100%,
+        height: 100%,
+        fill: if is-weekend-day { weekend-fill } else { none },
+        inset: 0pt
+      )[
+        #planner-column(
+          config,
+          header,
+          start-h: safe-parse-hour(config.planner.at("startTime", default: "08:00")),
+          end-h: safe-parse-hour(config.planner.at("endTime", default: "20:00")),
+          show-divs: config.planner.at("showDivisions", default: false),
+          text-size: 6pt,
+          show-border: false,
+          gutter: 3pt
+        )
+      ]
     })
   )
 

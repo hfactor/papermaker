@@ -24,12 +24,14 @@
   let num-weeks = calc.ceil((offset + num-days) / 7)
   
   let breadcrumbs = (
-    nav-link(config, month-name, "month", year, month: month),
-    nav-link(config, str(year), "year", year),
+    nav-link(config, month-name, "month", year, month: month, color: dark1),
+    nav-link(config, str(year), "year", year, color: dark1),
   )
   if config.generation.pages.quarter.enabled {
-    breadcrumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q))
+    breadcrumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q, color: dark1))
   }
+  
+  let title = month-name + " " + str(year)
   
   let weekend-fill = if config.colors.at("weekendHighlight", default: none) != none {
      rgb(config.colors.weekendHighlight).transparentize(85%)
@@ -37,7 +39,6 @@
      rgb(config.colors.at("light2", default: "#f4f4f5")).transparentize(85%)
   }
 
-  let title = month-name + " " + str(year)
   
   let grid-content = grid(
     columns: (30pt, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
@@ -103,7 +104,7 @@
   [
     #standard-layout(
       config,
-      title: [],
+      title: text(fill: dark1)[#title],
       breadcrumbs: breadcrumbs,
       body: grid-content
     )

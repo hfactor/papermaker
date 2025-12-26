@@ -113,7 +113,6 @@ body {
     color: #d4d4d8;
     font-size: 0.875rem;
     line-height: 1.5;
-    font-weight: 450;
 }
 
 .config-summary {
@@ -126,8 +125,7 @@ body {
     font-size: 0.75rem;
     color: var(--sidebar-label);
     margin-bottom: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-weight: 400;
 }
 
 .summary-list {
@@ -158,8 +156,8 @@ body {
 }
 
 .page-count-display .num {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 2rem;
+    font-weight: 400;
     color: #fff;
     line-height: 1;
 }
@@ -167,7 +165,7 @@ body {
 .page-count-display .unit {
     font-size: 0.625rem;
     color: var(--sidebar-label);
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sidebar-bottom {
@@ -285,8 +283,7 @@ body {
 
 .step-indicator .label {
     font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .wizard-content {
@@ -321,8 +318,12 @@ body {
     margin-bottom: 3rem;
 }
 
-.group-header {
+.summary-section {
     margin-bottom: 1.5rem;
+    min-height: 80px;
+}
+
+.group-header {
     font-size: 0.875rem;
 }
 
@@ -624,6 +625,17 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+
+.color-input.day-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
 }
 
 .hex-input {
