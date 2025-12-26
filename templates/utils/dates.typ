@@ -152,20 +152,15 @@
   let dow = day-of-week(year, month, day)
   
   if config != none {
-    let wknd-days = config.week.at("weekendDays", default: ("saturday", "sunday"))
-    // Convert day names to indices for comparison
-    // dow: 0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday
     let is-sat = dow == 5
     let is-sun = dow == 6
     let is-fri = dow == 4
     
-    // Check if saturday or sunday are in weekend days
-    for wknd in wknd-days {
-      if wknd == "saturday" and is-sat { return true }
-      if wknd == "sunday" and is-sun { return true }
-      if wknd == "friday" and is-fri { return true }
-    }
-    return false
+    let type = config.planner.at("weekendType", default: "sat-sun")
+    if type == "sat-sun" { return is-sat or is-sun }
+    if type == "fri-sat" { return is-fri or is-sat }
+    // Custom case - default to Sat/Sun for now
+    return is-sat or is-sun
   }
   
   // Default to Sat/Sun
@@ -211,14 +206,23 @@
 }
 
 // Get quarter for a month (1-4)
-#let get-quarter(month) = {
-  calc.quo(month - 1, 3) + 1
+#let get-quarter(month, fiscal-offset: 0) = {
+  let m = month - fiscal-offset
+  if m <= 0 { m += 12 }
+  calc.quo(m - 1, 3) + 1
 }
 
 // Get months in a quarter
-#let quarter-months(quarter) = {
-  let start = (quarter - 1) * 3 + 1
-  (start, start + 1, start + 2)
+#let quarter-months(quarter, fiscal-offset: 0) = {
+  let start = (quarter - 1) * 3 + 1 + fiscal-offset
+  let res = ()
+  for i in range(3) {
+    let m = start + i
+    while m > 12 { m -= 12 }
+    while m < 1 { m += 12 }
+    res.push(m)
+  }
+  res
 }
 
 // Format number as two digits (DD)

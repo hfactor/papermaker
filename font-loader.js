@@ -16,7 +16,7 @@ if (!fs.existsSync(FONTS_DIR)) {
  * @returns {Promise<boolean>} - Success status.
  */
 async function downloadFont(fontName, weight = '400') {
-    if (!fontName || fontName.toLowerCase() === 'inter') return true;
+    if (!fontName) return true;
 
     const fileName = `${fontName.replace(/\s+/g, '-')}-${weight}.ttf`;
     const filePath = path.join(FONTS_DIR, fileName);

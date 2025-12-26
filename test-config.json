@@ -1,0 +1,65 @@
+{
+    "timeRange": {
+        "startYear": 2025,
+        "startMonth": 1,
+        "durationMonths": 12
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "portrait"
+    },
+    "colors": {
+        "dark1": "#111111",
+        "dark2": "#666666",
+        "light1": "#ffffff",
+        "light2": "#f4f4f5",
+        "accent": "#4f46e5"
+    },
+    "typography": {
+        "primaryFont": "Inter",
+        "primaryFontWeight": 700,
+        "secondaryFont": "Inter",
+        "secondaryFontWeight": 400
+    },
+    "generation": {
+        "pages": {
+            "cover": {
+                "enabled": false
+            },
+            "year": {
+                "enabled": true
+            },
+            "quarter": {
+                "enabled": true,
+                "type": "calendar"
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": true
+            },
+            "day": {
+                "enabled": true,
+                "extraDaily": false,
+                "sidebar": "right",
+                "sidebarEnabled": true,
+                "sidebarModule": "planner",
+                "startTime": "08:00",
+                "endTime": "20:00",
+                "timeFormat": "24h",
+                "showHalfHour": false
+            }
+        }
+    },
+    "planner": {
+        "paperStyle": "line",
+        "density": "balanced",
+        "weekStart": 1,
+        "weekendType": "sat-sun",
+        "weekendDays": [
+            0,
+            6
+        ]
+    }
+}

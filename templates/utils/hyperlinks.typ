@@ -3,9 +3,9 @@
 
 // Helper to check if a month/year is in the generated range
 #let is-in-range(year, month, config) = {
-  let start-year = config.timeRange.at("startYear", default: datetime.today().year())
-  let start-month = config.timeRange.at("startMonth", default: 1)
-  let total-months = config.timeRange.at("durationMonths", default: 12)
+  let start-year = config.timeRange.startYear
+  let start-month = config.timeRange.startMonth
+  let total-months = config.timeRange.durationMonths
   
   // Calculate absolute month index (Year 0 Month 1 = 1)
   let target-abs-month = (year - start-year) * 12 + month
@@ -30,17 +30,17 @@
 
 // Create a clickable link to a page
 #let nav-link(config, content, type, year, month: none, week: none, day: none, quarter: none, color: black) = {
-  // 1. Check if page type is enabled in config
+  // 1. Check if page type is enabled in sanitized config
   let enabled = if type == "year" {
-    config.generation.pages.year.at("enabled", default: true)
+    config.generation.pages.year.enabled
   } else if type == "quarter" {
-    config.generation.pages.quarter.at("enabled", default: true)
+    config.generation.pages.quarter.enabled
   } else if type == "month" {
-    config.generation.pages.month.at("enabled", default: true)
+    config.generation.pages.month.enabled
   } else if type == "week" {
-    config.generation.pages.week.at("enabled", default: true)
+    config.generation.pages.week.enabled
   } else if type == "day" {
-    config.generation.pages.day.at("enabled", default: true)
+    config.generation.pages.day.enabled
   } else {
     true
   }
@@ -51,7 +51,7 @@
   
   // 2. Range validation
   let in-range = true
-  let start-year = config.timeRange.at("startYear", default: datetime.today().year())
+  let start-year = config.timeRange.startYear
   if type == "year" {
     in-range = (year == start-year) // We currently only generate one year overview
   } else if type == "month" {

@@ -1,402 +1,513 @@
-// Configuration state
-let config = {
-    pages: {
-        cover: true,
-        year: true,
-        quarter: false,
-        month: true,
-        week: false,
-        daily: true,
-        extraDaily: false
-    },
-    year: 2026,
-    startMonth: 1,
-    totalMonths: 12,
-    pageOrder: 'sequential',
-    coverImage: '',
-    startDay: 0,
-    monthFormat: 'full',
-    dayFormat: 'full',
-    paperStyle: 'plain',
-    guides: 'none',
-    firstPageTitle: '',
-    plannerPos: 'left',
-    plannerStartHour: 5,
-    plannerEndHour: 23,
-    showDivisions: false,
-    style: {
-        font: 'Inter',
-        fontWeight: '400',
-        headingFont: 'Inter',
-        headingWeight: '700',
-        baseFontSize: 10,
-        headerSize: 14,
-        titleSize: 24,
-        primaryColor: '#2c3e50',
-        bgColor: '#ffffff',
-        headerColor: '#2c3e50',
-        margin: 6,
-        gridSpacing: 5,
-        strokeWidth: 0.5,
-        borderRadius: 2
-    },
-    preset: 'custom'
-};
+/**
+ * PaperMaker V7.3 - Sleek Professional Planner
+ */
 
-const THEMES = {
-    light: {
-        primary: '#2563eb',
-        header: '#1e40af',
-        bg: '#ffffff'
+const PRESETS = {
+    professional: {
+        planner: { paperStyle: 'dot', density: 'compact' },
+        colors: { dark1: '#0f172a', light1: '#ffffff', accent: '#4f46e5' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     },
-    dark: {
-        primary: '#88c0d0',
-        header: '#eceff4',
-        bg: '#2e3440'
+    minimal: {
+        planner: { paperStyle: 'line', density: 'balanced' },
+        colors: { dark1: '#000000', light1: '#ffffff', accent: '#000000' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     },
-    paper: {
-        primary: '#b58900',
-        header: '#586e75',
-        bg: '#fdf6e3'
+    academic: {
+        planner: { paperStyle: 'line', density: 'balanced' },
+        colors: { dark1: '#422006', light1: '#fdfbf7', accent: '#92400e' },
+        typography: { primaryFont: 'Playfair Display', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+    },
+    creative: {
+        planner: { paperStyle: 'plain', density: 'spaced' },
+        colors: { dark1: '#312e81', light1: '#faf5ff', accent: '#db2777' },
+        typography: { primaryFont: 'Outfit', primaryFontWeight: 700, secondaryFont: 'Outfit', secondaryFontWeight: 400 }
+    },
+    focused: {
+        planner: { paperStyle: 'line', density: 'compact' },
+        colors: { dark1: '#ffffff', light1: '#09090b', accent: '#4f46e5' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     }
 };
 
-// UI Elements
-const generateBtn = document.getElementById('generate-btn');
-const downloadBtn = document.getElementById('download-btn');
-const statusMessage = document.getElementById('status-message');
-const pageCountEl = document.getElementById('page-count');
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadConfig();
-    updateFormFromConfig();
-    setupColorSync();
-    setupChangeListeners();
-    setupPresetListener();
-    updateLiveMetrics();
-    setupFontLoader();
-});
-
-function setupPresetListener() {
-    const presetSelect = document.getElementById('theme-preset');
-    presetSelect.addEventListener('change', (e) => {
-        const theme = THEMES[e.target.value];
-        if (theme) {
-            updateColorField('primary', theme.primary);
-            updateColorField('header', theme.header);
-            updateColorField('bg', theme.bg);
-            updateConfigFromForm();
-        }
-    });
-}
-
-function setupFontLoader() {
-    const fontInputs = ['font', 'heading-font'];
-    fontInputs.forEach(id => {
-        const input = document.getElementById(id);
-        const weightSelect = document.getElementById(`${id}-weight`);
-
-        input.addEventListener('change', () => loadGoogleFont(input.value, weightSelect.value, id));
-        weightSelect.addEventListener('change', () => loadGoogleFont(input.value, weightSelect.value, id));
-        loadGoogleFont(input.value, weightSelect.value, id); // Initial load
-    });
-}
-
-function loadGoogleFont(fontName, weight = '400', elId = 'font') {
-    if (!fontName || fontName === 'Inter') return;
-
-    // Create or update link tag
-    const linkId = `gfont-${fontName.replace(/\s+/g, '-').toLowerCase()}-${weight}`;
-    if (document.getElementById(linkId)) return;
-
-    const link = document.createElement('link');
-    link.id = linkId;
-    link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@${weight}&display=swap`;
-    document.head.appendChild(link);
-
-    // Apply preview style
-    const el = document.getElementById(elId);
-    if (el) {
-        el.style.fontFamily = `'${fontName}', sans-serif`;
-        el.style.fontWeight = weight;
+class PaperMaker {
+    constructor() {
+        this.config = this.loadState() || this.getDefaultConfig();
+        this.currentStep = 1;
+        this.init();
     }
-}
 
+    getDefaultConfig() {
+        return {
+            timeRange: { startYear: 2025, startMonth: 1, durationMonths: 12 },
+            output: { pageSize: 'a4', orientation: 'landscape' },
+            colors: { dark1: '#18181b', light1: '#ffffff', accent: '#4f46e5' },
+            typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400, fontScale: 1.0, titleSize: 24 },
+            generation: {
+                order: 'sequential',
+                pages: {
+                    cover: { enabled: false, title: '', imageUrl: '' },
+                    year: { enabled: true },
+                    quarter: { enabled: false, type: 'calendar' },
+                    month: { enabled: true },
+                    week: { enabled: true },
+                    day: { enabled: true, extraDaily: false, sidebar: 'right', sidebarEnabled: true, sidebarModule: 'planner', startTime: '08:00', endTime: '20:00', timeFormat: '24h', showHalfHour: false }
+                }
+            },
+            planner: { paperStyle: 'line', density: 'balanced', weekStart: 1, weekendType: 'sat-sun', weekendDays: [0, 6] }
+        };
+    }
 
-function setupColorSync() {
-    const colorFields = ['primary', 'header', 'bg'];
-    colorFields.forEach(field => {
-        const picker = document.getElementById(`${field}-color`);
-        const hex = document.getElementById(`${field}-color-hex`);
+    init() {
+        this.setupEventListeners();
+        this.syncUI();
+        this.setStep(1); // Ensure "Setup" is active on load
+        this.updatePageCount();
+        this.updateSummary();
+    }
 
-        if (!picker || !hex) return;
-
-        picker.addEventListener('input', () => {
-            hex.value = picker.value;
-            updateConfigFromForm();
+    setupEventListeners() {
+        // Timeline & Rules
+        ['startYear', 'startMonth', 'durationMonths', 'weekStart', 'weekendType', 'pageOrder'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', (e) => this.update(id, e.target.value));
         });
 
-        hex.addEventListener('input', () => {
-            if (/^#[0-9A-F]{6}$/i.test(hex.value)) {
-                picker.value = hex.value;
-                updateConfigFromForm();
+        // Custom Weekends
+        document.querySelectorAll('#customWeekendDays input').forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checked = Array.from(document.querySelectorAll('#customWeekendDays input:checked')).map(c => parseInt(c.value));
+                this.config.planner.weekendDays = checked;
+                this.saveState();
+                this.updatePageCount();
+            });
+        });
+
+        // Pages
+        ['includeCover', 'includeYear', 'includeQuarter', 'includeMonth', 'includeWeek', 'includeDay', 'extraDaily'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', (e) => {
+                this.update(id, e.target.checked);
+            });
+        });
+
+        // Step 2 Details
+        document.getElementById('quarterType')?.addEventListener('change', (e) => this.update('quarterType', e.target.value));
+        document.getElementById('coverTitle')?.addEventListener('input', (e) => this.update('coverTitle', e.target.value));
+        document.getElementById('coverImageUrl')?.addEventListener('input', (e) => this.update('coverImageUrl', e.target.value));
+        document.getElementById('includeSidebar')?.addEventListener('change', (e) => this.update('includeSidebar', e.target.checked));
+        document.getElementById('sidebarModule')?.addEventListener('change', (e) => this.update('sidebarModule', e.target.value));
+
+        ['startTime', 'endTime'].forEach(id => {
+            document.getElementById(id)?.addEventListener('blur', (e) => this.validateTime(e.target));
+        });
+
+        // Quantity/Time Buttons (+/-)
+        document.querySelectorAll('.btn-qty').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.target);
+                const action = btn.dataset.action;
+                const delta = action === 'inc' ? 1 : -1;
+
+                if (target.id === 'startTime' || target.id === 'endTime') {
+                    this.incrementTime(target, delta);
+                } else if (target.id === 'startYear') {
+                    this.update('startYear', parseInt(target.value) + delta);
+                } else if (target.id === 'durationMonths') {
+                    this.update('durationMonths', Math.max(1, parseInt(target.value) + delta));
+                }
+            });
+        });
+
+        // Step 3 Styling
+        document.getElementById('activePreset')?.addEventListener('change', (e) => this.applyPreset(e.target.value));
+        ['primaryFont', 'primaryFontWeight', 'secondaryFont', 'secondaryFontWeight'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', (e) => this.update(id, e.target.value));
+        });
+
+        // Visual Choices (Orientation)
+        document.querySelectorAll('.visual-choice').forEach(vc => {
+            vc.addEventListener('click', () => {
+                const parent = vc.closest('.visual-choice-row');
+                this.update(parent.dataset.id, vc.dataset.value);
+            });
+        });
+
+        // Choice Rows (Paper Style, Density, etc.)
+        document.querySelectorAll('.choice-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                const item = e.target.closest('.choice-item');
+                if (!item) return;
+                this.update(row.dataset.id, item.dataset.value);
+            });
+        });
+
+        // Colors
+        ['colorDark1', 'colorLight1', 'colorAccent'].forEach(id => {
+            const el = document.getElementById(id);
+            const hexInput = document.getElementById(`hex-${id}`);
+
+            el?.addEventListener('input', (e) => {
+                const key = id.replace('color', '').charAt(0).toLowerCase() + id.replace('color', '').slice(1);
+                this.config.colors[key] = e.target.value;
+                if (hexInput) hexInput.value = e.target.value;
+            });
+            el?.addEventListener('change', () => this.saveState());
+
+            if (hexInput) {
+                hexInput.addEventListener('input', (e) => {
+                    let val = e.target.value;
+                    if (!val.startsWith('#')) val = '#' + val;
+                    if (/^#[0-9A-F]{6}$/i.test(val)) {
+                        const key = id.replace('color', '').charAt(0).toLowerCase() + id.replace('color', '').slice(1);
+                        this.config.colors[key] = val;
+                        if (el) el.value = val;
+                        this.saveState();
+                        this.updateSummary();
+                    }
+                });
             }
         });
-    });
-}
 
-function setupChangeListeners() {
-    document.querySelectorAll('input, select').forEach(el => {
-        el.addEventListener('change', () => {
-            updateConfigFromForm();
-            updateLiveMetrics();
+        // Image Upload
+        document.getElementById('coverImageFile')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const label = document.getElementById('uploadLabel');
+            const trigger = document.querySelector('.upload-trigger');
+            if (label) label.innerText = 'Uploading...';
+
+            try {
+                const ext = file.name.split('.').pop();
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': file.type,
+                        'x-file-extension': ext
+                    },
+                    body: file
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.config.generation.pages.cover.imageUrl = result.url;
+                    if (label) label.innerText = `Uploaded: ${file.name}`;
+                    if (trigger) trigger.classList.add('has-file');
+                    this.saveState();
+                    this.showToast('Cover image uploaded');
+                }
+            } catch (err) {
+                console.error('Upload failed:', err);
+                if (label) label.innerText = 'Upload failed';
+                this.showToast('Upload failed', 'error');
+            }
         });
-    });
 
-    // Daily dependency
-    document.getElementById('page-daily').addEventListener('change', (e) => {
-        const extraField = document.getElementById('extra-daily-field');
-        if (e.target.checked) {
-            extraField.classList.add('active');
+        // Wizard Nav
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (this.currentStep < 3) this.setStep(this.currentStep + 1);
+            else this.generatePDF();
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => this.setStep(this.currentStep - 1));
+
+        document.querySelectorAll('.step-indicator').forEach(indicator => {
+            indicator.addEventListener('click', () => this.setStep(parseInt(indicator.dataset.step)));
+        });
+    }
+
+    incrementTime(el, delta) {
+        let val = this.config.generation.pages.day[el.id]; // e.g., "08:00"
+        let [h, m] = val.split(':').map(Number);
+        h = (h + delta + 24) % 24;
+        this.config.generation.pages.day[el.id] = (h < 10 ? '0' + h : h) + ':00';
+        this.saveState();
+        this.syncUI();
+    }
+
+    validateTime(el) {
+        let val = el.value.trim().toUpperCase();
+        const is12 = this.config.generation.pages.day.timeFormat === '12h';
+        let h24 = 8;
+
+        if (is12) {
+            let match = val.match(/(\d{1,2})\s*(AM|PM|)/i);
+            if (match) {
+                let h = parseInt(match[1]);
+                let ampm = (match[2] || "AM").toUpperCase();
+                if (h < 1) h = 1; if (h > 12) h = 12;
+                h24 = h;
+                if (ampm === "PM" && h < 12) h24 += 12;
+                if (ampm === "AM" && h === 12) h24 = 0;
+            }
         } else {
-            extraField.classList.remove('active');
-            document.getElementById('page-extraDaily').checked = false;
+            let h = parseInt(val.split(':')[0]);
+            if (!isNaN(h)) {
+                if (h < 0) h = 0; if (h > 23) h = 23;
+                h24 = h;
+            }
         }
-    });
-}
-
-function updateLiveMetrics() {
-    const isDaily = document.getElementById('page-daily').checked;
-    const isMonth = document.getElementById('page-month').checked;
-    const isWeek = document.getElementById('page-week').checked;
-
-    // Toggle extra daily field
-    const extraField = document.getElementById('extra-daily-field');
-    if (isDaily) extraField.classList.add('active');
-    else extraField.classList.remove('active');
-
-    // Logical Sequencing Blocking
-    const seqSelect = document.getElementById('page-order');
-    const optMD = document.getElementById('opt-month-days');
-    const optWD = document.getElementById('opt-week-days');
-
-    optMD.disabled = !(isMonth && isDaily);
-    optWD.disabled = !(isWeek && isDaily);
-
-    if (seqSelect.value === 'month-days' && optMD.disabled) seqSelect.value = 'sequential';
-    if (seqSelect.value === 'week-days' && optWD.disabled) seqSelect.value = 'sequential';
-
-    // Page count
-    const count = calculateTotalPages();
-    pageCountEl.textContent = count;
-}
-
-function calculateTotalPages() {
-    let total = 0;
-    const months = parseInt(document.getElementById('total-months').value) || 0;
-
-    if (document.getElementById('page-cover').checked) total += 1;
-    if (document.getElementById('page-year').checked) total += 1;
-
-    if (document.getElementById('page-quarter').checked) {
-        total += Math.ceil(months / 3);
+        this.config.generation.pages.day[el.id] = (h24 < 10 ? '0' + h24 : h24) + ':00';
+        this.saveState();
+        this.syncUI();
+        this.updateSummary();
     }
 
-    if (document.getElementById('page-month').checked) {
-        total += months;
+    update(id, val) {
+        const c = this.config;
+        switch (id) {
+            case 'startYear': c.timeRange.startYear = parseInt(val); break;
+            case 'startMonth': c.timeRange.startMonth = parseInt(val); break;
+            case 'durationMonths': c.timeRange.durationMonths = parseInt(val) || 0; break;
+            case 'weekStart': c.planner.weekStart = parseInt(val); break;
+            case 'weekendType': c.planner.weekendType = val; break;
+            case 'pageOrder': c.generation.order = val; break;
+
+            case 'includeCover': c.generation.pages.cover.enabled = val; break;
+            case 'coverTitle': c.generation.pages.cover.title = val; break;
+            case 'coverImageUrl': c.generation.pages.cover.imageUrl = val; break;
+            case 'includeYear': c.generation.pages.year.enabled = val; break;
+            case 'includeQuarter': c.generation.pages.quarter.enabled = val; break;
+            case 'quarterType': c.generation.pages.quarter.type = val; break;
+            case 'includeMonth': c.generation.pages.month.enabled = val; break;
+            case 'includeWeek': c.generation.pages.week.enabled = val; break;
+            case 'includeDay':
+                c.generation.pages.day.enabled = val;
+                if (!val) c.generation.pages.day.extraDaily = false;
+                break;
+            case 'extraDaily': c.generation.pages.day.extraDaily = val; break;
+
+            case 'includeSidebar': c.generation.pages.day.sidebarEnabled = val; break;
+            case 'sidebarModule': c.generation.pages.day.sidebarModule = val; break;
+            case 'sidebarPosition': c.generation.pages.day.sidebar = val; break;
+            case 'timeFormat':
+                c.generation.pages.day.timeFormat = val;
+                this.convertTimeInputs(val);
+                break;
+            case 'showHalfHour': c.generation.pages.day.showHalfHour = (val === 'true'); break;
+
+            case 'orientation': c.output.orientation = val; break;
+            case 'paperStyle': c.planner.paperStyle = val; break;
+            case 'density': c.planner.density = val; break;
+
+            case 'primaryFont': c.typography.primaryFont = val; break;
+            case 'primaryFontWeight': c.typography.primaryFontWeight = parseInt(val); break;
+            case 'secondaryFont': c.typography.secondaryFont = val; break;
+            case 'secondaryFontWeight': c.typography.secondaryFontWeight = parseInt(val); break;
+        }
+        this.saveState();
+        this.syncUI();
+        this.updatePageCount();
+        this.updateSummary();
     }
 
-    if (document.getElementById('page-week').checked) {
-        total += Math.ceil(months * 4.34);
+    convertTimeInputs(format) {
+        const start = document.getElementById('startTime');
+        const end = document.getElementById('endTime');
+        const rangeLabel = document.getElementById('activeRangeLabel');
+        if (!start || !end) return;
+
+        const toDisplay = (h24) => {
+            let [h, m] = h24.split(':').map(Number);
+            if (format === '12h') {
+                let ampm = h >= 12 ? 'PM' : 'AM';
+                let h12 = h % 12 || 12;
+                return (h12 < 10 ? '0' + h12 : h12) + ' ' + ampm;
+            } else {
+                return (h < 10 ? '0' + h : h) + ':00';
+            }
+        };
+
+        start.value = toDisplay(this.config.generation.pages.day.startTime);
+        end.value = toDisplay(this.config.generation.pages.day.endTime);
+        if (rangeLabel) rangeLabel.innerText = `Active Range (${format})`;
     }
 
-    if (document.getElementById('page-daily').checked) {
-        const startYear = parseInt(document.getElementById('year').value);
-        const startMonth = parseInt(document.getElementById('start-month').value);
-        const startDate = new Date(startYear, startMonth - 1, 1);
-        const endDate = new Date(startYear, startMonth - 1 + months, 0);
-        const days = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    setStep(n) {
+        this.currentStep = n;
+        document.querySelectorAll('.wizard-step').forEach((s, idx) => s.classList.toggle('visible', idx + 1 === n));
+        document.querySelectorAll('.step-indicator').forEach((s, idx) => {
+            const stepNum = idx + 1;
+            s.classList.toggle('active', stepNum === n);
+            s.classList.toggle('done', stepNum < n);
+        });
+        document.getElementById('prevBtn').disabled = n === 1;
+        document.getElementById('nextBtn').innerText = n === 3 ? 'Build Planner' : 'Continue \u2192';
+        document.querySelector('.wizard-content')?.scrollTo(0, 0);
+    }
 
-        total += days;
-        if (document.getElementById('page-extraDaily').checked) {
-            total += days;
+    applyPreset(id) {
+        const p = PRESETS[id];
+        if (!p) return;
+        if (p.planner) Object.assign(this.config.planner, p.planner);
+        if (p.colors) Object.assign(this.config.colors, p.colors);
+        if (p.typography) Object.assign(this.config.typography, p.typography);
+        this.syncUI();
+        this.saveState();
+        this.updateSummary();
+        this.showToast(`${id.charAt(0).toUpperCase() + id.slice(1)} theme applied`);
+    }
+
+    syncUI() {
+        const c = this.config;
+        const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+        const setC = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+        const setD = (id, v) => { const el = document.getElementById(id); if (el) el.disabled = !!v; };
+
+        setV('startYear', c.timeRange.startYear);
+        setV('startMonth', c.timeRange.startMonth);
+        setV('durationMonths', c.timeRange.durationMonths);
+        setV('weekStart', c.planner.weekStart);
+        setV('weekendType', c.planner.weekendType);
+        setV('pageOrder', c.generation.order);
+
+        setC('includeCover', c.generation.pages.cover.enabled);
+        setV('coverTitle', c.generation.pages.cover.title);
+        setV('coverImageUrl', c.generation.pages.cover.imageUrl);
+        setC('includeYear', c.generation.pages.year.enabled);
+        setC('includeQuarter', c.generation.pages.quarter.enabled);
+        setV('quarterType', c.generation.pages.quarter.type);
+        setC('includeMonth', c.generation.pages.month.enabled);
+        setC('includeWeek', c.generation.pages.week.enabled);
+        setC('includeDay', c.generation.pages.day.enabled);
+        setC('extraDaily', c.generation.pages.day.extraDaily);
+        setD('extraDaily', !c.generation.pages.day.enabled);
+
+        setC('includeSidebar', c.generation.pages.day.sidebarEnabled);
+        setV('sidebarModule', c.generation.pages.day.sidebarModule);
+
+        setV('primaryFont', c.typography.primaryFont);
+        setV('primaryFontWeight', c.typography.primaryFontWeight);
+        setV('secondaryFont', c.typography.secondaryFont);
+        setV('secondaryFontWeight', c.typography.secondaryFontWeight);
+
+        // Disclosures
+        const disc = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? 'block' : 'none'; };
+        disc('customWeekendDays', c.planner.weekendType === 'custom');
+        disc('coverOptions', c.generation.pages.cover.enabled);
+        disc('quarterOptions', c.generation.pages.quarter.enabled);
+        disc('sidebarSettings', c.generation.pages.day.sidebarEnabled);
+        disc('plannerOptions', c.generation.pages.day.sidebarEnabled && c.generation.pages.day.sidebarModule === 'planner');
+
+        // Page Placement Disclosure
+        const needsPlacement = c.generation.pages.day.enabled &&
+            (c.generation.pages.month.enabled || c.generation.pages.week.enabled || c.generation.pages.quarter.enabled);
+        disc('placementOptions', needsPlacement);
+
+        // Choice rows
+        const syncChoice = (id, v) => {
+            const row = document.querySelector(`.choice-row[data-id="${id}"]`) || document.querySelector(`.visual-choice-row[data-id="${id}"]`);
+            if (!row) return;
+            row.querySelectorAll('.choice-item, .visual-choice').forEach(item => {
+                item.classList.toggle('active', String(item.dataset.value) === String(v));
+            });
+        };
+        syncChoice('paperStyle', c.planner.paperStyle);
+        syncChoice('density', c.planner.density);
+        syncChoice('sidebarPosition', c.generation.pages.day.sidebar);
+        syncChoice('timeFormat', c.generation.pages.day.timeFormat);
+        syncChoice('showHalfHour', c.generation.pages.day.showHalfHour);
+        syncChoice('orientation', c.output.orientation);
+
+        // Color sync
+        Object.keys(c.colors).forEach(k => {
+            const id = 'color' + k.charAt(0).toUpperCase() + k.slice(1);
+            const el = document.getElementById(id);
+            const hexInput = document.getElementById(`hex-${id}`);
+            if (el) {
+                el.value = c.colors[k];
+                if (hexInput) hexInput.value = c.colors[k];
+            }
+        });
+
+        this.convertTimeInputs(c.generation.pages.day.timeFormat);
+
+        if (c.planner.weekendType === 'custom') {
+            document.querySelectorAll('#customWeekendDays input').forEach(cb => {
+                cb.checked = (c.planner.weekendDays || []).includes(parseInt(cb.value));
+            });
         }
     }
 
-    return total;
-}
+    updateSummary() {
+        const c = this.config;
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const sumTimeEl = document.getElementById('sum-time');
+        if (sumTimeEl) sumTimeEl.innerText = `${months[c.timeRange.startMonth - 1]} ${c.timeRange.startYear} (${c.timeRange.durationMonths}m)`;
 
-function updateConfigFromForm() {
-    ['cover', 'year', 'quarter', 'month', 'week', 'daily', 'extraDaily'].forEach(p => {
-        config.pages[p] = document.getElementById(`page-${p}`).checked;
-    });
+        const inclusions = [];
+        if (c.generation.pages.cover.enabled) inclusions.push('Cover');
+        if (c.generation.pages.year.enabled) inclusions.push('Yearly Overview');
+        if (c.generation.pages.quarter.enabled) inclusions.push('Quarterly Spreads');
+        if (c.generation.pages.month.enabled) inclusions.push('Monthly Grid');
+        if (c.generation.pages.week.enabled) inclusions.push('Weekly Planner');
+        if (c.generation.pages.day.enabled) inclusions.push('Daily Page');
 
-    config.year = parseInt(document.getElementById('year').value);
-    config.startMonth = parseInt(document.getElementById('start-month').value);
-    config.totalMonths = parseInt(document.getElementById('total-months').value);
-    config.pageOrder = document.getElementById('page-order').value;
-    config.startDay = parseInt(document.getElementById('start-day').value);
-    config.firstPageTitle = document.getElementById('cover-title').value;
-    config.coverImage = document.getElementById('cover-image').value;
+        const sumPagesEl = document.getElementById('sum-pages');
+        if (sumPagesEl) sumPagesEl.innerText = inclusions.length > 0 ? inclusions.join(', ') : 'None selected';
 
-    const monthFormat = document.querySelector('input[name="monthFormat"]:checked');
-    config.monthFormat = monthFormat ? monthFormat.value : 'full';
+        const orient = c.output.orientation;
+        const style = c.planner.paperStyle;
+        const sumStyleEl = document.getElementById('sum-style');
+        if (sumStyleEl) sumStyleEl.innerText = `${orient.charAt(0).toUpperCase() + orient.slice(1)} / ${style.charAt(0).toUpperCase() + style.slice(1)}`;
+    }
 
-    const dayFormat = document.querySelector('input[name="dayFormat"]:checked');
-    config.dayFormat = dayFormat ? dayFormat.value : 'full';
+    updatePageCount() {
+        let count = 0;
+        const dur = this.config.timeRange.durationMonths || 0;
+        if (this.config.generation.pages.cover.enabled) count += 1;
+        count += 1; // Welcome
+        if (this.config.generation.pages.year.enabled) count += Math.ceil(dur / 12);
+        if (this.config.generation.pages.quarter.enabled) count += Math.ceil(dur / 3);
+        if (this.config.generation.pages.month.enabled) count += dur;
+        if (this.config.generation.pages.week.enabled) count += Math.ceil((dur * 30.4) / 7);
+        if (this.config.generation.pages.day.enabled) {
+            count += Math.floor(dur * 30.4) * (this.config.generation.pages.day.extraDaily ? 2 : 1);
+        }
+        const pcEl = document.getElementById('pageCount');
+        if (pcEl) pcEl.innerText = count;
+    }
 
-    const paperStyle = document.querySelector('input[name="paperStyle"]:checked');
-    config.paperStyle = paperStyle ? paperStyle.value : 'plain';
-
-    const guides = document.querySelector('input[name="guides"]:checked');
-    config.guides = guides ? guides.value : 'none';
-
-
-    const plannerPos = document.querySelector('input[name="plannerPos"]:checked');
-    config.plannerPos = plannerPos ? plannerPos.value : 'left';
-    config.plannerStartHour = parseInt(document.getElementById('planner-start').value);
-    config.plannerEndHour = parseInt(document.getElementById('planner-end').value);
-    config.showDivisions = document.getElementById('show-divisions').checked;
-
-    config.style.font = document.getElementById('font').value;
-    config.style.fontWeight = document.getElementById('font-weight').value;
-    config.style.headingFont = document.getElementById('heading-font').value;
-    config.style.headingWeight = document.getElementById('heading-font-weight').value;
-    config.style.baseFontSize = parseFloat(document.getElementById('base-font-size').value);
-    config.style.headerSize = parseFloat(document.getElementById('header-size').value);
-    config.style.titleSize = parseFloat(document.getElementById('title-size').value);
-
-    config.style.primaryColor = document.getElementById('primary-color').value;
-    config.style.headerColor = document.getElementById('header-color').value;
-    config.style.bgColor = document.getElementById('bg-color').value;
-
-    config.style.margin = parseFloat(document.getElementById('margin').value);
-    config.style.gridSpacing = parseFloat(document.getElementById('grid-spacing').value);
-    config.style.strokeWidth = parseFloat(document.getElementById('stroke-width').value);
-    config.style.borderRadius = parseFloat(document.getElementById('border-radius').value);
-
-    config.preset = document.getElementById('theme-preset').value;
-
-    saveConfig();
-}
-
-function updateFormFromConfig() {
-    ['cover', 'year', 'quarter', 'month', 'week', 'daily', 'extraDaily'].forEach(p => {
-        const el = document.getElementById(`page-${p}`);
-        if (el) el.checked = !!config.pages[p];
-    });
-
-    document.getElementById('year').value = config.year;
-    document.getElementById('start-month').value = config.startMonth;
-    document.getElementById('total-months').value = config.totalMonths;
-    document.getElementById('page-order').value = config.pageOrder;
-    document.getElementById('start-day').value = config.startDay;
-    document.getElementById('cover-title').value = config.firstPageTitle || 'Calendar';
-    document.getElementById('cover-image').value = config.coverImage || '';
-
-    document.getElementById('theme-preset').value = config.preset || 'custom';
-
-    syncRadioField('monthFormat', config.monthFormat);
-    syncRadioField('dayFormat', config.dayFormat);
-    syncRadioField('paperStyle', config.paperStyle);
-    syncRadioField('guides', config.guides);
-    syncRadioField('plannerPos', config.plannerPos || 'left');
-
-    document.getElementById('planner-start').value = config.plannerStartHour || 5;
-    document.getElementById('planner-end').value = config.plannerEndHour || 23;
-    document.getElementById('show-divisions').checked = !!config.showDivisions;
-
-    const s = config.style || {};
-    document.getElementById('font').value = s.font || 'Inter';
-    document.getElementById('font-weight').value = s.fontWeight || '400';
-    document.getElementById('heading-font').value = s.headingFont || 'Inter';
-    document.getElementById('heading-font-weight').value = s.headingWeight || '700';
-    document.getElementById('base-font-size').value = s.baseFontSize || 10;
-    document.getElementById('header-size').value = s.headerSize || 14;
-    document.getElementById('title-size').value = s.titleSize || 24;
-
-    updateColorField('primary', s.primaryColor || '#2c3e50');
-    updateColorField('header', s.headerColor || '#2c3e50');
-    updateColorField('bg', s.bgColor || '#ffffff');
-
-    document.getElementById('margin').value = s.margin || 6;
-    document.getElementById('grid-spacing').value = s.gridSpacing || 5;
-    document.getElementById('stroke-width').value = s.strokeWidth || 0.5;
-    document.getElementById('border-radius').value = s.borderRadius || 2;
-
-    // Load fonts in UI
-    loadGoogleFont(s.font);
-    loadGoogleFont(s.headingFont);
-}
-
-function syncRadioField(name, value) {
-    const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
-    if (radio) radio.checked = true;
-}
-
-function updateColorField(id, value) {
-    const picker = document.getElementById(`${id}-color`);
-    const hex = document.getElementById(`${id}-color-hex`);
-    if (picker) picker.value = value;
-    if (hex) hex.value = value;
-}
-
-function saveConfig() {
-    localStorage.setItem('calendarConfigV4', JSON.stringify(config));
-}
-
-function loadConfig() {
-    const saved = localStorage.getItem('calendarConfigV4');
-    if (saved) {
+    async generatePDF() {
+        const nextBtn = document.getElementById('nextBtn');
         try {
-            const parsed = JSON.parse(saved);
-            config = { ...config, ...parsed };
+            nextBtn.disabled = true;
+            nextBtn.innerText = 'Engaging Engine...';
+            const finalConfig = JSON.parse(JSON.stringify(this.config));
+            if (finalConfig.generation.pages.cover.enabled && !finalConfig.generation.pages.cover.title) {
+                finalConfig.generation.pages.cover.title = `Year ${finalConfig.timeRange.startYear}`;
+            }
+
+            const res = await fetch('/generate-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalConfig)
+            });
+            const data = await res.json();
+            if (data.success) {
+                const link = document.createElement('a');
+                link.href = data.downloadUrl;
+                link.download = `PaperMaker_Planner_${finalConfig.timeRange.startYear}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                this.showToast('Bespoke PDF built & downloaded');
+            } else throw new Error(data.error);
         } catch (e) {
-            console.error('Failed to load config', e);
+            this.showToast('Build failed. Check config.');
+        } finally {
+            nextBtn.disabled = false;
+            nextBtn.innerText = 'Build Planner';
         }
     }
+
+    showToast(m) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.innerText = m;
+        t.style.transform = 'translate(-50%, 0)';
+        setTimeout(() => t.style.transform = 'translate(-50%, 6.25rem)', 3500);
+    }
+
+    saveState() { localStorage.setItem('papermaker_v7_4_state', JSON.stringify(this.config)); }
+    loadState() { return JSON.parse(localStorage.getItem('papermaker_v7_4_state')); }
 }
 
-// Generate PDF
-generateBtn.addEventListener('click', async () => {
-    updateConfigFromForm();
-
-    statusMessage.textContent = 'Processing...';
-    statusMessage.style.color = 'var(--accent)';
-    generateBtn.disabled = true;
-    downloadBtn.style.display = 'none';
-
-    try {
-        const response = await fetch('/generate-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            statusMessage.textContent = 'PDF Ready!';
-            statusMessage.style.color = '#10b981';
-            downloadBtn.style.display = 'block';
-            downloadBtn.onclick = () => {
-                window.location.href = `/output/${data.filename}`;
-            };
-        } else {
-            statusMessage.textContent = 'Build Error: ' + data.message;
-            statusMessage.style.color = '#ef4444';
-        }
-    } catch (error) {
-        console.error('Generation failed:', error);
-        statusMessage.textContent = 'Network Error: ' + error.message + '. Is the server running?';
-        statusMessage.style.color = '#ef4444';
-    } finally {
-        generateBtn.disabled = false;
-    }
-});
+document.addEventListener('DOMContentLoaded', () => { window.app = new PaperMaker(); });

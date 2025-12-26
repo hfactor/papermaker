@@ -5,7 +5,7 @@
 // Guide patterns (Centre, Thirds) as content instead of patterns
 #let guide-overlay(config, width: 100%, height: 100%) = {
   let guide-conf = config.at("guides", default: (:))
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
+  let dark1 = rgb(config.colors.at("dark1", default: "#18181b"))
   let color = dark1.transparentize(80%) // Very subtle
   
   box(width: width, height: height)[
@@ -37,13 +37,26 @@
 
 // Paper background patterns (Grid/Dot/Line) with proportional spacing
 #let paper-pattern(config, width: none, height: none) = {
-  let note-conf = config.at("noteArea", default: (:))
-  let style = note-conf.at("layout", default: "plain")
-  let accent-color = rgb(config.colors.at("accent", default: "#000000"))
-  let color = accent-color.transparentize(85%)
+  let plan-conf = config.at("planner", default: (:))
+  let style = plan-conf.at("paperStyle", default: "plain")
+  let dark2 = rgb(config.colors.at("dark2", default: "#71717a"))
+  let color = dark2.transparentize(80%)
   
-  // Base spacing from config
-  let base-spacing = note-conf.at("gridSpacing", default: 5) * 1mm
+  // Use light2 for grid highlights if applicable
+  
+  // Density mapping
+  let dens = plan-conf.at("density", default: "balanced")
+  let base-spacing = if type(dens) == int { dens * 1mm }
+                    else if dens == "compact" { 5.5mm }
+                    else if dens == "spaced" { 10mm }
+                    else { 7.5mm } // balanced
+  
+  if "gridSpacing" in plan-conf {
+    let gs = plan-conf.gridSpacing
+    if type(gs) == str { gs = int(gs) }
+    if type(gs) == int { base-spacing = gs * 1mm }
+  }
+
   let stroke-w = config.typography.at("strokeWidth", default: 0.3) * 1pt
   
   // Calculate proportional spacing if width/height are provided
@@ -57,12 +70,12 @@
 
   if style == "grid" {
     tiling(size: (sx, sy))[
-      #place(top + left, line(start: (0pt, 0pt), end: (sx, 0pt), stroke: stroke-w + color))
-      #place(top + left, line(start: (0pt, 0pt), end: (0pt, sy), stroke: stroke-w + color))
+      #place(top + left, line(start: (0pt, 0pt), end: (sx, 0pt), stroke: (stroke-w * 1.5) + color.darken(30%)))
+      #place(top + left, line(start: (0pt, 0pt), end: (0pt, sy), stroke: (stroke-w * 1.5) + color.darken(30%)))
     ]
   } else if style == "dot" {
     tiling(size: (sx, sy))[
-      #place(center + horizon, circle(radius: stroke-w, fill: color))
+      #place(center + horizon, circle(radius: stroke-w * 1.2, fill: color.darken(40%)))
     ]
   } else if style == "line" {
     tiling(size: (sx, sy))[
@@ -75,7 +88,7 @@
 
 // Minimal divider
 #let divider(config, color: none) = {
-  let c = if color != none { color } else { rgb(config.colors.at("dark2", default: "#000000")) }
+  let c = if color != none { color } else { rgb(config.colors.at("dark2", default: "#71717a")) }
   let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
   line(length: 100%, stroke: sw + c)
 }
@@ -85,25 +98,13 @@
   let c = if color != none { color } else { rgb(config.colors.at("dark1", default: "#000000")) }
   let base-sz = 12pt * config.typography.at("fontScale", default: 1.0)
   let sz = if size != none { size } else { base-sz }
-  let f = config.typography.at("primaryFont", default: "Lato")
+  let f = config.typography.at("primaryFont", default: "Inter")
+  let w = config.typography.at("primaryFontWeight", default: 700)
   
-  text(font: f, size: sz, weight: "bold", fill: c)[#content]
+  text(font: f, size: sz, weight: w, fill: c)[#content]
 }
 
-// Breadcrumb with config
-#let breadcrumb(config, items, color: none) = {
-  let c = if color != none { color } else { rgb(config.colors.at("accent", default: "#000000")) }
-  let parts = ()
-  
-  for (i, item) in items.enumerate() {
-    if i > 0 {
-      parts.push(text(fill: c)[ → ])
-    }
-    parts.push(item)
-  }
-  
-  parts.join()
-}
+// Breadcrumb utility moved to layout.typ for better integration
 
 // Navigation header
 #let nav-header(config, back-link, title, color: none) = {
@@ -123,6 +124,10 @@
 
 // Apply paper style and guides to a block
 #let paper-block(config, width: 100%, height: 100%, body: none, force-plain: false, show-guides: true, override-layout: none) = {
+  // Ensure gridSpacing is a number
+  let gs = config.planner.at("gridSpacing", default: 5)
+  if type(gs) == str { gs = int(gs) }
+  
   block(
     width: width, 
     height: height, 
@@ -133,10 +138,10 @@
       let bg-pattern = if force-plain { none } else { 
         if override-layout != none {
            // Create a modified config for paper-pattern
-           let mod-note = config.at("noteArea", default: (:))
-           mod-note.insert("layout", override-layout)
+           let mod-plan = config.at("planner", default: (:))
+           mod-plan.insert("paperStyle", override-layout)
            let mod-config = config
-           mod-config.insert("noteArea", mod-note)
+           mod-config.insert("planner", mod-plan)
            paper-pattern(mod-config, width: size.width, height: size.height)
         } else {
            paper-pattern(config, width: size.width, height: size.height) 
@@ -161,7 +166,10 @@
 #let date-header(config, year, month, day, size: "large", show-divider: true) = {
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
   let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let primary-font = config.typography.at("primaryFont", default: "Lato")
+  let primary-font = config.typography.at("primaryFont", default: "Inter")
+  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
+  let secondary-font = config.typography.at("secondaryFont", default: "Inter")
+  let secondary-weight = config.typography.at("secondaryFontWeight", default: 400)
   
   let month-name = get-month-name(month, format: "full")
   let dow = day-of-week(year, month, day)
@@ -177,21 +185,21 @@
   let line-h = if size == "large" { 24pt } else { 14pt }
   
   block(width: 100%)[
-    #nav-link(config, text(font: primary-font, size: year-sz, weight: "bold", fill: dark1)[#str(year)], "year", year, color: dark1)
+    #nav-link(config, text(font: primary-font, size: year-sz, weight: primary-weight, fill: dark1)[#str(year)], "year", year, color: dark1)
     #v(if size == "large" { 2pt } else { 0pt })
     #grid(
       columns: (auto, auto, auto),
       column-gutter: 12pt,
       align: horizon,
-      text(font: primary-font, size: date-sz, weight: "bold", fill: dark1)[#fmt-dd(day)],
+      text(font: primary-font, size: date-sz, weight: primary-weight, fill: dark1)[#fmt-dd(day)],
       if show-divider {
         line(start: (0pt, -line-h), end: (0pt, line-h), stroke: stroke-w + dark2.transparentize(80%))
       },
       stack(
         dir: ttb,
         spacing: 6pt, // Increased spacing
-        nav-link(config, text(font: primary-font, size: sub-sz, weight: "bold", fill: dark2.transparentize(40%))[#month-name], "month", year, month: month, color: dark2.transparentize(40%)),
-        text(font: primary-font, size: sub-sz - 2pt, weight: "bold", fill: dark2.transparentize(40%))[#day-name] // Smaller day
+        nav-link(config, text(font: secondary-font, size: sub-sz, weight: secondary-weight, fill: dark2.transparentize(40%))[#month-name], "month", year, month: month, color: dark2.transparentize(40%)),
+        text(font: secondary-font, size: sub-sz - 2pt, weight: secondary-weight, fill: dark2.transparentize(40%))[#day-name] // Smaller day
       )
     )
   ]
@@ -212,11 +220,10 @@
 }
 
 // Shared Planner Grid Component
-#let planner-grid(config, start-h: 6, end-h: 22, show-divs: false, text-size: 8pt, gutter: 8pt) = {
+#let planner-grid(config, start-h: 6, end-h: 22, show-divs: false, time-format: "24h", text-size: 8pt, gutter: 8pt) = {
   let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
   let stroke-w = config.typography.at("strokeWidth", default: 0.5) * 1pt
   
-  // Ensure we have numbers even if parsing failed partially
   let sh = if type(start-h) == int { start-h } else { 8 }
   let eh = if type(end-h) == int { end-h } else { 20 }
   
@@ -234,7 +241,15 @@
       let items = ()
       for i in range(hours.len()) {
         let h = hours.at(i)
-        let t = if h < 10 { "0" + str(h) + ":00" } else { str(h) + ":00" }
+        
+        // Format time string
+        let t = if time-format == "12h" {
+          let ampm = if h < 12 { " AM" } else { " PM" }
+          let h12 = if h == 0 { 12 } else if h > 12 { h - 12 } else { h }
+          str(h12) + ampm
+        } else {
+          if h < 10 { "0" + str(h) + ":00" } else { str(h) + ":00" }
+        }
         
         // Row 1: Time + Line
         items.push(align(right + horizon)[
@@ -254,7 +269,7 @@
 }
 
 // Unified Planner Column Component
-#let planner-column(config, header, start-h: 8, end-h: 20, show-divs: false, text-size: 8pt, show-border: true, gutter: 8pt) = {
+#let planner-column(config, header, start-h: 8, end-h: 20, show-divs: false, time-format: "24h", text-size: 8pt, show-border: true, gutter: 8pt) = {
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
   let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
   let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
@@ -273,7 +288,7 @@
       rows: (auto, 1fr),
       row-gutter: if header != [] { 8pt } else { 0pt },
       header,
-      planner-grid(config, start-h: start-h, end-h: end-h, show-divs: show-divs, text-size: text-size, gutter: gutter)
+      planner-grid(config, start-h: start-h, end-h: end-h, show-divs: show-divs, time-format: time-format, text-size: text-size, gutter: gutter)
     )
   ]
 }

@@ -1,160 +1,132 @@
-// Config normalization - converts old format to new format
-// This allows all components to use the new hierarchical structure
-
 #let normalize-config(raw-config) = {
-  // If already in new format, return as-is
-  if "timeRange" in raw-config and "generation" in raw-config {
-    return raw-config
+  let config = if type(raw-config) == dictionary { raw-config } else { (:) }
+  
+  // Helper for safe nested access
+  let safe-get(dict, key, default) = {
+    if type(dict) != dictionary { return default }
+    let val = dict.at(key, default: default)
+    if val == none { return default }
+    return val
   }
   
-  // Convert old format to new format
-  let config = (:)
-  
-  // Time range
-  config.timeRange = (
-    startYear: raw-config.at("year", default: datetime.today().year()),
-    startMonth: raw-config.at("startMonth", default: 1),
-    durationMonths: raw-config.at("totalMonths", default: 12)
-  )
-  
-  // Output
-  config.output = (
-    pageSize: "a4",
-    orientation: "landscape",
-    exportMode: "pdf"
-  )
-  
-  // Language
-  config.language = (
-    code: "en",
-    direction: "ltr",
-    dateFormat: "YYYY-MM-DD",
-    timeFormat: "24h"
-  )
-  
-  // Colors - map old style to new 5-color system
-  if "style" in raw-config {
-    let style = raw-config.style
-    config.colors = (
-      dark1: style.at("primaryColor", default: "#000000"),
-      dark2: style.at("headerColor", default: "#000000"),
-      light1: style.at("bgColor", default: "#ffffff"),
-      light2: "#f5f5f5",
-      accent: style.at("primaryColor", default: "#0066cc"),
-      weekendHighlight: "#eef6ff"
-    )
-    
-    // Typography
-    config.typography = (
-      primaryFont: style.at("font", default: "Lato"),
-      secondaryFont: style.at("headingFont", default: "Inter"),
-      fontScale: style.at("baseFontSize", default: 10) / 10.0,
-      strokeWidth: style.at("strokeWidth", default: 0.5),
-      borderRadius: style.at("borderRadius", default: 2)
-    )
-  } else {
-    config.colors = (
-      dark1: "#000000",
-      dark2: "#000000",
-      light1: "#ffffff",
-      light2: "#f5f5f5",
-      accent: "#0066cc",
-      weekendHighlight: "#eef6ff"
-    )
-    
-    config.typography = (
-      primaryFont: "Lato",
-      secondaryFont: "Inter",
-      fontScale: 1.0,
-      strokeWidth: 0.5,
-      borderRadius: 2
-    )
+  // Helper for safe dictionary extraction
+  let safe-dict(dict, key) = {
+    let val = safe-get(dict, key, (:))
+    if type(val) != dictionary { return (:) }
+    return val
   }
-  
-  // Week configuration
-  config.week = (
-    startDay: raw-config.at("weekStartDay", default: "monday"),
-    weekendDays: ("saturday", "sunday"),
-    isoWeekNumbers: true
+
+  // Deep Sanitation Helpers
+  let sanitize-timeRange(d) = (
+    startYear: safe-get(d, "startYear", 2025),
+    startMonth: safe-get(d, "startMonth", 1),
+    durationMonths: safe-get(d, "durationMonths", 12)
   )
   
-  // Note area
-  config.noteArea = (
-    layout: raw-config.at("paperStyle", default: "plain"),
-    density: "medium",
-    gridSpacing: if "style" in raw-config { raw-config.style.at("gridSpacing", default: 5) } else { 5 }
+  let sanitize-output(d) = (
+    pageSize: safe-get(d, "pageSize", "a4"),
+    orientation: safe-get(d, "orientation", "landscape")
   )
   
-  // Guides - map old string format to new dictionary format
-  let raw-guides = raw-config.at("guides", default: "none")
-  if type(raw-guides) == str {
-    config.guides = (
-      pageCenter: raw-guides == "center",
-      horizontalThirds: raw-guides == "thirds",
-      verticalThirds: raw-guides == "thirds"
-    )
-  } else {
-    config.guides = raw-guides
+  let sanitize-typography(d) = (
+    primaryFont: safe-get(d, "primaryFont", "Inter"),
+    primaryFontWeight: safe-get(d, "primaryFontWeight", 700),
+    secondaryFont: safe-get(d, "secondaryFont", "Inter"),
+    secondaryFontWeight: safe-get(d, "secondaryFontWeight", 400),
+    fontScale: safe-get(d, "fontScale", 1.0),
+    titleSize: safe-get(d, "titleSize", 24)
+  )
+  
+  let sanitize-planner(d) = (
+    paperStyle: safe-get(d, "paperStyle", "line"),
+    density: safe-get(d, "density", "balanced"),
+    weekStart: safe-get(d, "weekStart", 1),
+    weekendDays: safe-get(d, "weekendDays", (0, 6))
+  )
+  
+  let sanitize-print(d) = (
+    margins: safe-get(d, "margins", 6),
+    bleed: safe-get(d, "bleed", 0)
+  )
+
+  // 1. Sanitize Top-Level Categories
+  config = (
+    ..config,
+    timeRange: sanitize-timeRange(safe-dict(config, "timeRange")),
+    output: sanitize-output(safe-dict(config, "output")),
+    typography: sanitize-typography(safe-dict(config, "typography")),
+    planner: sanitize-planner(safe-dict(config, "planner")),
+    print: sanitize-print(safe-dict(config, "print"))
+  )
+  
+  // 2. Week derived settings
+  if safe-get(config, "week", none) == none { 
+    let ws = config.planner.weekStart
+    config += (week: (startDay: if ws == 1 { "monday" } else { "sunday" })) 
   }
-  
-  // Planner
-  config.planner = (
-    startTime: if "plannerStartHour" in raw-config {
-      let h = raw-config.plannerStartHour
-      if h < 10 { "0" + str(h) + ":00" } else { str(h) + ":00" }
-    } else { "08:00" },
-    endTime: if "plannerEndHour" in raw-config {
-      let h = raw-config.plannerEndHour
-      if h < 10 { "0" + str(h) + ":00" } else { str(h) + ":00" }
-    } else { "20:00" },
-    slotDuration: 60,
-    timeFormat: "24h",
-    showDivisions: raw-config.at("showDivisions", default: false)
-  )
-  
-  // Generation - map old pages to new structure
-  let pages-config = raw-config.at("pages", default: (:))
-  config.generation = (
-    order: raw-config.at("pageOrder", default: "sequential"),
-    pages: (
-      cover: (
-        enabled: pages-config.at("cover", default: false),
-        title: raw-config.at("firstPageTitle", default: "Calendar"),
-        image: raw-config.at("coverImage", default: none)
-      ),
-      year: (
-        enabled: pages-config.at("year", default: false)
-      ),
-      quarter: (
-        enabled: pages-config.at("quarter", default: false)
-      ),
-      month: (
-        enabled: pages-config.at("month", default: false),
-        labels: raw-config.at("monthFormat", default: "full")
-      ),
-      week: (
-        enabled: pages-config.at("week", default: false)
-      ),
-      day: (
-        enabled: pages-config.at("daily", default: false),
-        extraDaily: pages-config.at("extraDaily", default: false),
-        columnSide: raw-config.at("plannerPos", default: "left")
-      )
+  if safe-get(config, "generation", none) == none { config += (generation: (order: "sequential", pages: (:))) }
+
+  // 3. Normalize Page Settings
+  let p = safe-dict(config.generation, "pages")
+  let gen-pages = (
+    cover: (
+      enabled: safe-get(safe-dict(p, "cover"), "enabled", false),
+      title: safe-get(safe-dict(p, "cover"), "title", ""),
+      imageUrl: safe-get(safe-dict(p, "cover"), "imageUrl", "")
+    ),
+    year: (
+      enabled: safe-get(safe-dict(p, "year"), "enabled", true)
+    ),
+    quarter: (
+      enabled: safe-get(safe-dict(p, "quarter"), "enabled", true),
+      type: safe-get(safe-dict(p, "quarter"), "type", "calendar")
+    ),
+    month: (
+      enabled: safe-get(safe-dict(p, "month"), "enabled", true)
+    ),
+    week: (
+      enabled: safe-get(safe-dict(p, "week"), "enabled", true)
+    ),
+    day: (
+      enabled: safe-get(safe-dict(p, "day"), "enabled", true),
+      extraDaily: safe-get(safe-dict(p, "day"), "extraDaily", false),
+      sidebar: safe-get(safe-dict(p, "day"), "sidebar", "right"),
+      sidebarEnabled: safe-get(safe-dict(p, "day"), "sidebarEnabled", true),
+      sidebarModule: safe-get(safe-dict(p, "day"), "sidebarModule", "planner"),
+      startTime: safe-get(safe-dict(p, "day"), "startTime", "08:00"),
+      endTime: safe-get(safe-dict(p, "day"), "endTime", "20:00"),
+      timeFormat: safe-get(safe-dict(p, "day"), "timeFormat", "24h"),
+      showHalfHour: safe-get(safe-get(p, "day", (:)), "showHalfHour", false)
     )
   )
   
-  // Linking
-  config.linking = (
-    enableHyperlinks: true,
-    colorLinks: false
+  config = (
+    ..config,
+    generation: (
+      ..config.generation,
+      pages: gen-pages
+    )
+  )
+
+  // 4. Final Color Sanitation & Derivation
+  let base-dark1-hex = safe-get(config.colors, "dark1", "#18181b")
+  let base-light1-hex = safe-get(config.colors, "light1", "#ffffff")
+  let base-accent-hex = safe-get(config.colors, "accent", "#3e63dd")
+  
+  let current-colors = (
+    dark1: base-dark1-hex,
+    light1: base-light1-hex,
+    accent: base-accent-hex
   )
   
-  // Print
-  config.print = (
-    margins: 6,
-    bleed: 0,
-    colorProfile: "RGB"
-  )
+  let base-dark1 = rgb(base-dark1-hex)
+  let base-light1 = rgb(base-light1-hex)
+  let base-accent = rgb(base-accent-hex)
   
+  current-colors += (dark2: base-dark1.transparentize(50%).to-hex())
+  current-colors += (light2: base-accent.mix((base-light1, 70%)).to-hex())
+  
+  config = (..config, colors: current-colors)
+
   return config
 }

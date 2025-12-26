@@ -1,28 +1,30 @@
 // Main template orchestrator for PDF calendar generation
-// This file coordinates all components based on configuration
-
 #import "utils/dates.typ": *
 #import "utils/hyperlinks.typ": *
 #import "utils/styles.typ": *
 #import "components/cover.typ": cover-page
+#import "components/welcome.typ": welcome-page
 #import "components/year.typ": year-calendar
 #import "components/quarter.typ": quarter-spread
 #import "components/month.typ": month-spread
 #import "components/week.typ": week-spread
 #import "components/daily.typ": daily-page, extra-daily-page
 
-// Load configuration from JSON
+// Load configuration from sys.inputs or fallback
 #import "utils/config-normalize.typ": normalize-config
-#let raw-config = json("../examples/new-config.json")
+#let raw-config = if sys.inputs.at("config", default: none) != none {
+  json(sys.inputs.config)
+} else {
+  json("../examples/new-config.json")
+}
 #let config = normalize-config(raw-config)
 
-
-// Pre-calculate date ranges (config is now normalized to new format)
-#let start-month = config.timeRange.at("startMonth", default: 1)
-#let total-months = config.timeRange.at("durationMonths", default: 12)
-#let start-year = config.timeRange.at("startYear", default: datetime.today().year())
+// Pre-calculate date ranges
+#let start-month = config.timeRange.startMonth
+#let total-months = config.timeRange.durationMonths
+#let start-year = config.timeRange.startYear
 #let months-to-gen = month-list(start-year, start-month, total-months)
-#let page-order = config.generation.at("order", default: "sequential")
+#let page-order = config.generation.order
 
 // Create unique list of quarters to generate
 #let quarters-to-gen = ()
@@ -41,140 +43,110 @@
 
 // Set document metadata
 #set document(
-  title: config.generation.pages.cover.at("title", default: "Calendar"),
-  author: "PDF Calendar Generator",
+  title: config.generation.pages.cover.title,
+  author: "PaperTools",
   date: datetime.today()
 )
 
-// Set page configuration
+// Set global page background (Light 1)
 #set page(
-  paper: config.output.at("pageSize", default: "a4"),
-  margin: config.print.at("margins", default: 6) * 1mm,
-  flipped: config.output.at("orientation", default: "portrait") == "landscape",
-  fill: rgb(config.colors.at("light1", default: "#ffffff"))
+  paper: config.output.pageSize,
+  flipped: config.output.orientation == "landscape",
+  margin: config.print.margins * 1mm,
+  fill: rgb(config.colors.light1)
 )
 
-// Set text defaults
+// Set text defaults (Secondary / Body Font)
 #set text(
-  font: config.typography.at("primaryFont", default: "Lato"),
-  size: (config.typography.at("fontScale", default: 1.0) * 10) * 1pt,
-  fill: rgb(config.colors.at("dark1", default: "#000000"))
+  font: config.typography.secondaryFont,
+  weight: config.typography.secondaryFontWeight,
+  size: (config.typography.fontScale * 10) * 1pt,
+  fill: rgb(config.colors.dark1)
 )
 
 // Set paragraph spacing
 #set par(justify: false, leading: 0.65em)
 
 // 1. Cover Page
-#if config.generation.pages.cover.at("enabled", default: false) {
+#if config.generation.pages.cover.enabled {
   pagebreak(weak: true)
   cover-page(config)
 }
 
-// 2. Year Calendar
-#if config.generation.pages.year.at("enabled", default: false) {
+// 2. Welcome Page (UDS V1)
+#pagebreak(weak: true)
+#welcome-page(config)
+
+// 3. Year Calendar
+#if config.generation.pages.year.enabled {
   pagebreak(weak: true)
   year-calendar(config)
 }
 
-// 3. Page Ordering Logic
-#let quarter-enabled = config.generation.pages.at("quarter", default: (:)).at("enabled", default: false)
-#let month-enabled = config.generation.pages.at("month", default: (:)).at("enabled", default: false)
-#let week-enabled = config.generation.pages.at("week", default: (:)).at("enabled", default: false)
-#let day-enabled = config.generation.pages.at("day", default: (:)).at("enabled", default: false)
-#let extra-enabled = config.generation.pages.day.at("extraDaily", default: false)
-
-#let extra-page(year, month, day) = {
-  pagebreak(weak: true)
-  extra-daily-page(config, year, month, day)
-}
+// 4. Page Ordering Logic
+#let quarter-enabled = config.generation.pages.quarter.enabled
+#let month-enabled = config.generation.pages.month.enabled
+#let week-enabled = config.generation.pages.week.enabled
+#let day-enabled = config.generation.pages.day.enabled
 
 #if page-order == "sequential" {
-  // Quarters
   if quarter-enabled {
-    for q in quarters-to-gen {
-      pagebreak(weak: true)
-      quarter-spread(config, q.quarter, year: q.year)
-    }
+    for q in quarters-to-gen { pagebreak(weak: true); quarter-spread(config, q.quarter, year: q.year) }
   }
-  
-  // Months
   if month-enabled {
-    for m in months-to-gen {
-      pagebreak(weak: true)
-      month-spread(config, m.month, year: m.year)
-    }
+    for m in months-to-gen { pagebreak(weak: true); month-spread(config, m.month, year: m.year) }
   }
-  
-  // Weeks
   if week-enabled {
-    for w in weeks-to-gen {
-      pagebreak(weak: true)
-      week-spread(config, w.year, w.week)
-    }
+    for w in weeks-to-gen { pagebreak(weak: true); week-spread(config, w.year, w.week) }
   }
-  
-  // Days
   if day-enabled {
     for m in months-to-gen {
-      let num-days = days-in-month(m.year, m.month)
-      for day in range(1, num-days + 1) {
-        pagebreak(weak: true)
-        daily-page(config, m.year, m.month, day)
-        if extra-enabled { extra-page(m.year, m.month, day) }
+      for day in range(1, days-in-month(m.year, m.month) + 1) {
+        pagebreak(weak: true); daily-page(config, m.year, m.month, day)
+        if config.generation.pages.day.extraDaily { 
+          pagebreak(weak: true); extra-daily-page(config, m.year, m.month, day) 
+        }
       }
     }
   }
-} else if page-order == "interleaved-month" {
+} else if page-order == "month-days" {
   if quarter-enabled {
-    for q in quarters-to-gen {
-      pagebreak(weak: true)
-      quarter-spread(config, q.quarter, year: q.year)
-    }
+    for q in quarters-to-gen { pagebreak(weak: true); quarter-spread(config, q.quarter, year: q.year) }
   }
-  
+  if week-enabled {
+    for w in weeks-to-gen { pagebreak(weak: true); week-spread(config, w.year, w.week) }
+  }
   for m in months-to-gen {
-    if month-enabled {
-      pagebreak(weak: true)
-      month-spread(config, m.month, year: m.year)
-    }
-    
+    if month-enabled { pagebreak(weak: true); month-spread(config, m.month, year: m.year) }
     if day-enabled {
-      let num-days = days-in-month(m.year, m.month)
-      for day in range(1, num-days + 1) {
-        pagebreak(weak: true)
-        daily-page(config, m.year, m.month, day)
-        if extra-enabled { extra-page(m.year, m.month, day) }
+      for day in range(1, days-in-month(m.year, m.month) + 1) {
+        pagebreak(weak: true); daily-page(config, m.year, m.month, day)
+        if config.generation.pages.day.extraDaily { 
+          pagebreak(weak: true); extra-daily-page(config, m.year, m.month, day) 
+        }
       }
     }
   }
-} else if page-order == "interleaved-week" {
+} else if page-order == "week-days" {
   if quarter-enabled {
-    for q in quarters-to-gen {
-      pagebreak(weak: true)
-      quarter-spread(config, q.quarter, year: q.year)
-    }
+    for q in quarters-to-gen { pagebreak(weak: true); quarter-spread(config, q.quarter, year: q.year) }
   }
-  
   if month-enabled {
-    for m in months-to-gen {
-      pagebreak(weak: true)
-      month-spread(config, m.month, year: m.year)
-    }
+    for m in months-to-gen { pagebreak(weak: true); month-spread(config, m.month, year: m.year) }
   }
-  
   for w in weeks-to-gen {
-    if week-enabled {
-      pagebreak(weak: true)
-      week-spread(config, w.year, w.week)
-    }
-    
+    if week-enabled { pagebreak(weak: true); week-spread(config, w.year, w.week) }
     if day-enabled {
       let start-date = date-from-iso-week(w.year, w.week)
       for i in range(7) {
         let d = start-date + duration(days: i)
-        pagebreak(weak: true)
-        daily-page(config, d.year(), d.month(), d.day())
-        if extra-enabled { extra-page(d.year(), d.month(), d.day()) }
+        // Check if the daily page is in the generated month range
+        if is-in-range(d.year(), d.month(), config) {
+          pagebreak(weak: true); daily-page(config, d.year(), d.month(), d.day())
+          if config.generation.pages.day.extraDaily { 
+            pagebreak(weak: true); extra-daily-page(config, d.year(), d.month(), d.day()) 
+          }
+        }
       }
     }
   }

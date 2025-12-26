@@ -1,30 +1,36 @@
 // Cover page component
-
 #import "../utils/dates.typ": *
 
 #let cover-page(config) = {
-  // Config is normalized
   let cover-conf = config.generation.pages.cover
   let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let primary-font = config.typography.at("primaryFont", default: "Lato")
-  let title-sz = 48pt * 1.5 * config.typography.at("fontScale", default: 1.0)
+  let primary-font = config.typography.at("primaryFont", default: "Inter")
+  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
+  let title-sz = 24pt * config.typography.at("fontScale", default: 1.0)
   
-  // Get title and image
-  let title = cover-conf.at("title", default: "Calendar")
+  let title = cover-conf.at("title", default: "")
   let year = config.timeRange.startYear
-  let cover-image = cover-conf.at("image", default: none)
+  let cover-image = cover-conf.at("imageUrl", default: "")
   
-  page(margin: 0pt, fill: dark1)[
+  page(margin: 40pt, fill: rgb(config.colors.at("light1", default: "#ffffff")))[
+    #set text(fill: dark1)
     #align(center + horizon)[
-      #if cover-image != none and cover-image != "" [
-        #image(cover-image, width: 80%)
-        #v(2em)
+      #if cover-image != "" [
+        #rect(width: 70%, height: 40%, stroke: none, fill: none)[
+           #image(cover-image, width: 100%, height: 100%, fit: "contain")
+        ]
+        #v(2.5em)
       ] else [
-        #v(4em)
-        #text(font: primary-font, size: title-sz * 2, weight: "bold", fill: white)[#str(year)]
-        #v(2em)
+        #v(3em)
       ]
-      #text(font: primary-font, size: title-sz, weight: "bold", fill: white)[#title]
+      
+      #if title != "" [
+        #text(font: primary-font, size: title-sz * 2, weight: primary-weight)[#title]
+        #v(1em)
+        #text(font: primary-font, size: title-sz, weight: primary-weight, fill: dark1.transparentize(50%))[#str(year)]
+      ] else [
+        #text(font: primary-font, size: title-sz * 3, weight: primary-weight)[#str(year)]
+      ]
     ]
   ]
 }

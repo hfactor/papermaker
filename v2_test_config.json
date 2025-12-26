@@ -1,0 +1,61 @@
+{
+    "timeRange": {
+        "startYear": 2025,
+        "startMonth": 4,
+        "durationMonths": 3
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "landscape"
+    },
+    "colors": {
+        "dark1": "#18181b",
+        "dark2": "#71717a",
+        "light1": "#ffffff",
+        "light2": "#f4f4f5",
+        "accent": "#3e63dd"
+    },
+    "typography": {
+        "primaryFont": "Inter",
+        "fontScale": 1.0,
+        "titleSize": 24
+    },
+    "generation": {
+        "order": "sequential",
+        "pages": {
+            "cover": {
+                "enabled": true,
+                "title": "Fiscal 2025",
+                "imageUrl": ""
+            },
+            "year": {
+                "enabled": true
+            },
+            "quarter": {
+                "enabled": true,
+                "type": "fiscal"
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": true
+            },
+            "day": {
+                "enabled": true,
+                "extraDaily": true,
+                "sidebar": "right",
+                "sidebarModule": "planner",
+                "startTime": "09:00",
+                "endTime": "17:00",
+                "timeFormat": "12h",
+                "showHalfHour": true
+            }
+        }
+    },
+    "planner": {
+        "paperStyle": "grid",
+        "density": "compact",
+        "gridSpacing": 5
+    }
+}

@@ -6,110 +6,126 @@ const path = require('path');
 const { downloadFont } = require('./font-loader');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static('web'));
 app.use('/output', express.static('output'));
+app.use('/uploads', express.static('uploads'));
+
+// Ensure uploads directory exists
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
+
+// Automatic cleanup: Delete files in output/ older than 1 hour
+function cleanupOutput() {
+    const outputDir = path.join(__dirname, 'output');
+    if (!fs.existsSync(outputDir)) return;
+
+    const now = Date.now();
+    const expiry = 60 * 60 * 1000; // 1 hour
+
+    fs.readdir(outputDir, (err, files) => {
+        if (err) return console.error('Cleanup error:', err);
+        files.forEach(file => {
+            if (file === '.gitkeep') return;
+            const filePath = path.join(outputDir, file);
+            fs.stat(filePath, (err, stats) => {
+                if (err) return;
+                if (now - stats.mtimeMs > expiry) {
+                    fs.unlink(filePath, () => console.log(`[Cleanup] Deleted old file: ${file}`));
+                }
+            });
+        });
+    });
+}
+setInterval(cleanupOutput, 15 * 60 * 1000); // Run every 15 mins
+
+// Upload endpoint
+app.post('/upload', express.raw({ type: 'image/*', limit: '5mb' }), (req, res) => {
+    const ext = req.headers['x-file-extension'] || 'png';
+    const filename = `upload-${Date.now()}.${ext}`;
+    const filePath = path.join(UPLOADS_DIR, filename);
+
+    fs.writeFile(filePath, req.body, (err) => {
+        if (err) return res.status(500).json({ error: 'Upload failed' });
+        res.json({ success: true, url: `/uploads/${filename}`, path: filePath });
+    });
+});
 
 // Generate PDF endpoint
-app.post('/generate-pdf', (req, res) => {
+app.post('/generate-pdf', async (req, res) => {
     const config = req.body;
-
-    // Validate config - support both old and new format
-    const year = config.year || (config.timeRange && config.timeRange.startYear);
-    if (!config || !year) {
-        return res.status(400).json({ error: 'Invalid configuration: missing year' });
-    }
+    const year = config.year || (config.timeRange && config.timeRange.startYear) || new Date().getFullYear();
 
     // Create temporary config file
     const timestamp = Date.now();
-    const configPath = `temp-config-${timestamp}.json`;
-    const outputName = `calendar-${config.year}-${timestamp}`;
+    const configPath = path.join(__dirname, `temp-config-${timestamp}.json`);
+    const outputBaseName = `plan-${timestamp}`;
+    const outputFileName = `${outputBaseName}-${year}.pdf`;
 
-    (async () => {
-        try {
-            // Download fonts first - support both old and new format
-            const primaryFont = config.typography?.primaryFont || config.style?.font;
-            const primaryWeight = config.typography?.fontScale ? '400' : (config.style?.fontWeight || '400');
-            const secondaryFont = config.typography?.secondaryFont || config.style?.headingFont;
-            const secondaryWeight = config.typography?.fontScale ? '700' : (config.style?.headingWeight || '700');
+    try {
+        // 1. Download fonts needed for this build (supporting both V1 and old format)
+        const primaryFont = config.typography?.primaryFont || config.style?.font;
+        const secondaryFont = config.typography?.secondaryFont || config.style?.headingFont;
 
-            if (primaryFont) await downloadFont(primaryFont, primaryWeight);
-            if (secondaryFont && secondaryFont !== primaryFont) await downloadFont(secondaryFont, secondaryWeight);
+        const fonts = [
+            { name: primaryFont, weight: '400' },
+            { name: secondaryFont, weight: '700' }
+        ].filter(f => f.name);
 
-            // Write config to temporary file
-            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-
-            console.log(`[${new Date().toISOString()}] Generating PDF for year ${year}...`);
-            console.log(`[${new Date().toISOString()}] Config file: ${configPath}`);
-            console.log(`[${new Date().toISOString()}] Output name: ${outputName}`);
-
-            // Run build script with increased buffer size (10MB)
-            exec(`./build.sh ${configPath} ${outputName}`, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
-                // Clean up temp config file
-                try {
-                    fs.unlinkSync(configPath);
-                } catch (e) {
-                    console.error('Failed to delete temp config:', e);
-                }
-
-                // Log all output for debugging
-                console.log(`[${new Date().toISOString()}] Build stdout:`, stdout);
-                if (stderr) {
-                    console.log(`[${new Date().toISOString()}] Build stderr:`, stderr);
-                }
-
-                if (error) {
-                    console.error(`[${new Date().toISOString()}] Build error:`, error.message);
-                    return res.status(500).json({
-                        error: 'PDF generation failed',
-                        details: stderr || stdout || error.message
-                    });
-                }
-
-                const pdfPath = `output/${outputName}-${year}.pdf`;
-
-                // Check if PDF was created
-                if (fs.existsSync(pdfPath)) {
-                    console.log(`[${new Date().toISOString()}] PDF generated successfully: ${pdfPath}`);
-                    res.json({
-                        success: true,
-                        filename: `${outputName}-${year}.pdf`,
-                        downloadUrl: `http://localhost:${PORT}/output/${outputName}-${year}.pdf`
-                    });
-                } else {
-                    console.error(`[${new Date().toISOString()}] PDF file not found after build`);
-                    res.status(500).json({
-                        error: 'PDF file not created',
-                        details: stdout || 'No output from build script'
-                    });
-                }
-            });
-        } catch (err) {
-            console.error(`[${new Date().toISOString()}] Server error:`, err);
-            res.status(500).json({
-                error: 'Server error',
-                details: err.message
-            });
+        for (const font of fonts) {
+            const success = await downloadFont(font.name, font.weight);
+            if (!success) {
+                console.warn(`[Build] Warning: Failed to download font: ${font.name}. Build may use system fallbacks.`);
+            }
         }
-    })();
+
+        // 2. Write config
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+        console.log(`[Build] Starting PDF generation for ${year}...`);
+
+        // 3. Run build script
+        exec(`./build.sh "${configPath}" "${outputBaseName}"`, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+            // Cleanup temp config immediately
+            fs.unlink(configPath, () => { });
+
+            if (error) {
+                console.error(`[Build] Error:`, error.message);
+                if (stderr) console.error(`[Build] Stderr:`, stderr);
+                if (stdout) console.log(`[Build] Stdout:`, stdout);
+                return res.status(500).json({ error: 'Generation failed', details: stderr || stdout || error.message });
+            }
+
+            const pdfPath = path.join(__dirname, 'output', outputFileName);
+            if (fs.existsSync(pdfPath)) {
+                // Return dynamic URL based on request host
+                const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+                const host = req.headers.host;
+                res.json({
+                    success: true,
+                    filename: outputFileName,
+                    downloadUrl: `${protocol}://${host}/output/${outputFileName}`
+                });
+            } else {
+                res.status(500).json({ error: 'File not created', details: stdout });
+            }
+        });
+    } catch (err) {
+        console.error(`[Server] Error:`, err);
+        res.status(500).json({ error: 'Server error', details: err.message });
+    }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
-// Start server
 app.listen(PORT, () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📅 PDF Calendar Generator Server');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`✓ Server running at http://localhost:${PORT}`);
-    console.log(`✓ Open http://localhost:${PORT} in your browser`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Press Ctrl+C to stop the server\n');
+    console.log('🚀 PaperTools V1 Backend Active');
+    console.log(`📡 Port: ${PORT}`);
+    console.log(`🕒 Cleanup: Every 15m (1h expiry)`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });
