@@ -2,6 +2,7 @@
 #import "dates.typ": *
 #import "styles.typ": *
 #import "hyperlinks.typ": *
+#import "config-helpers.typ": get-colors, get-fonts
 #import "../components/sidebar.typ": *
 
 #let breadcrumb(config, items) = items.join(" / ")
@@ -14,13 +15,8 @@
   body: none,
   is-daily: false
 ) = {
-  let dark1 = rgb(config.colors.at("dark1", default: "#18181b"))
-  let dark2 = rgb(config.colors.at("dark2", default: "#71717a"))
-  let primary-font = config.typography.at("primaryFont", default: "Inter")
-  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
-  let secondary-font = config.typography.at("secondaryFont", default: "Inter")
-  let secondary-weight = config.typography.at("secondaryFontWeight", default: 400)
-  let accent = rgb(config.colors.at("accent", default: "#3e63dd"))
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   
   // Clean breadcrumbs: Only show sections that are actually enabled in the PDF
   let q-enabled = config.generation.pages.quarter.enabled
@@ -50,11 +46,11 @@
           dir: ttb,
           spacing: 8pt,
           if breadcrumbs.len() > 0 {
-            text(font: secondary-font, size: 11pt, weight: secondary-weight, fill: dark1)[
+            text(font: fonts.secondary, size: 11pt, weight: fonts.secondaryWeight, fill: colors.dark1)[
               #breadcrumb(config, breadcrumbs)
             ]
           },
-          text(font: primary-font, size: config.typography.at("titleSize", default: 24) * 1pt, weight: primary-weight, fill: dark1)[#title]
+          text(font: fonts.primary, size: fonts.titleSize * 1pt, weight: fonts.primaryWeight, fill: colors.dark1)[#title]
         ),
         // Right side: navigation?
         []

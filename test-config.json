@@ -22,6 +22,7 @@
         "secondaryFontWeight": 400
     },
     "generation": {
+        "order": "sequential",
         "pages": {
             "cover": {
                 "enabled": false

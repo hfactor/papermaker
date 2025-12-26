@@ -2,19 +2,12 @@
 #import "../utils/hyperlinks.typ": *
 #import "../utils/styles.typ": *
 #import "../utils/layout.typ": *
+#import "../utils/config-helpers.typ": get-colors, get-fonts
 #import "sidebar.typ": *
 
 #let week-spread(config, year, week-num) = {
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let weekend-fill = if config.colors.at("weekendHighlight", default: none) != none {
-     rgb(config.colors.weekendHighlight).transparentize(85%)
-  } else {
-     rgb(config.colors.at("light2", default: "#f4f4f5")).transparentize(85%)
-  }
-  let primary-font = config.typography.at("primaryFont", default: "Inter")
-  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
-  let secondary-font = config.typography.at("secondaryFont", default: "Inter")
-  let secondary-weight = config.typography.at("secondaryFontWeight", default: 400)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   
   let iso-week-start = date-from-iso-week(year, week-num)
   let week-days = ()
@@ -24,18 +17,8 @@
   }
   
   let m-name = get-month-name(week-days.at(0).month)
-  let q = get-quarter(week-days.at(0).month)
   
-  let breadcrumbs = (
-    nav-link(config, m-name, "month", year, month: week-days.at(0).month, color: dark1),
-    nav-link(config, str(year), "year", year, color: dark1),
-  )
-  if config.generation.pages.quarter.enabled {
-    breadcrumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q, color: dark1))
-  }
-  if config.generation.pages.week.enabled {
-    breadcrumbs.push(nav-link(config, "W" + str(week-num), "week", year, week: week-num, color: dark1))
-  }
+  let breadcrumbs = build-breadcrumbs(config, year, month: week-days.at(0).month, week: week-num, color: colors.dark1)
   
   let title = "Week " + str(week-num)
   
@@ -47,15 +30,15 @@
       let header = align(top + left)[
         #nav-link(
           config,
-          text(font: primary-font, size: 10pt, weight: primary-weight)[#fmt-dd(day-info.day) #get-month-name(day-info.month, format: "abbreviated")],
+          text(font: fonts.primary, size: 10pt, weight: fonts.primaryWeight)[#fmt-dd(day-info.day) #get-month-name(day-info.month, format: "abbreviated")],
           "day",
           day-info.year,
           month: day-info.month,
           day: day-info.day,
-          color: dark1
+          color: colors.dark1
         )
         #v(-3pt)
-        #text(font: secondary-font, size: 8pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#get-day-name(day-info.dow, format: "full")]
+        #text(font: fonts.secondary, size: 8pt, weight: fonts.secondaryWeight, fill: colors.dark1.transparentize(50%))[#get-day-name(day-info.dow, format: "full")]
       ]
       
       // Add weekend background color
@@ -64,14 +47,14 @@
       block(
         width: 100%,
         height: 100%,
-        fill: if is-weekend-day { weekend-fill } else { none },
+        fill: if is-weekend-day { colors.weekendFill } else { none },
         inset: 0pt
       )[
         #planner-column(
           config,
           header,
-          start-h: safe-parse-hour(config.planner.at("startTime", default: "08:00")),
-          end-h: safe-parse-hour(config.planner.at("endTime", default: "20:00")),
+          start-h: safe-parse-hour(config.generation.pages.day.at("startTime", default: "08:00")),
+          end-h: safe-parse-hour(config.generation.pages.day.at("endTime", default: "20:00")),
           show-divs: config.planner.at("showDivisions", default: false),
           text-size: 6pt,
           show-border: false,

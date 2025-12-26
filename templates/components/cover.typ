@@ -1,19 +1,19 @@
 // Cover page component
 #import "../utils/dates.typ": *
+#import "../utils/config-helpers.typ": get-colors, get-fonts
 
 #let cover-page(config) = {
   let cover-conf = config.generation.pages.cover
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let primary-font = config.typography.at("primaryFont", default: "Inter")
-  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   let title-sz = 24pt * config.typography.at("fontScale", default: 1.0)
   
   let title = cover-conf.at("title", default: "")
   let year = config.timeRange.startYear
   let cover-image = cover-conf.at("imageUrl", default: "")
   
-  page(margin: 40pt, fill: rgb(config.colors.at("light1", default: "#ffffff")))[
-    #set text(fill: dark1)
+  page(margin: 40pt, fill: colors.light1)[
+    #set text(fill: colors.dark1)
     #align(center + horizon)[
       #if cover-conf.at("imageUrl", default: "") != "" [
         #rect(width: 70%, height: 40%, stroke: none, fill: none)[
@@ -25,9 +25,9 @@
       ]
       
       #if title != "" [
-        #text(font: primary-font, size: title-sz * 2, weight: primary-weight)[#title]
+        #text(font: fonts.primary, size: title-sz * 2, weight: fonts.primaryWeight)[#title]
       ] else [
-        #text(font: primary-font, size: title-sz * 3, weight: primary-weight)[#str(year)]
+        #text(font: fonts.primary, size: title-sz * 3, weight: fonts.primaryWeight)[#str(year)]
       ]
     ]
   ]

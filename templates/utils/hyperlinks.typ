@@ -86,3 +86,29 @@
   
   link(target, text(fill: color)[#content])
 }
+
+// Build breadcrumbs for navigation
+#let build-breadcrumbs(config, year, month: none, day: none, week: none, color: black) = {
+  let crumbs = ()
+  
+  // Add month breadcrumb if provided
+  if month != none {
+    crumbs.push(nav-link(config, get-month-name(month), "month", year, month: month, color: color))
+  }
+  
+  // Always add year breadcrumb
+  crumbs.push(nav-link(config, str(year), "year", year, color: color))
+  
+  // Add quarter breadcrumb if month provided and quarters enabled
+  if month != none and config.generation.pages.quarter.enabled {
+    let q = get-quarter(month)
+    crumbs.push(nav-link(config, "Q" + str(q), "quarter", year, quarter: q, color: color))
+  }
+  
+  // Add week breadcrumb if provided and weeks enabled
+  if week != none and config.generation.pages.week.enabled {
+    crumbs.push(nav-link(config, "W" + str(week), "week", year, week: week, color: color))
+  }
+  
+  crumbs
+}

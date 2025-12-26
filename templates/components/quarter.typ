@@ -2,20 +2,13 @@
 #import "../utils/hyperlinks.typ": *
 #import "../utils/styles.typ": *
 #import "../utils/layout.typ": *
+#import "../utils/config-helpers.typ": get-colors, get-fonts, get-month-label-format
 #import "sidebar.typ": *
 
 #let quarter-spread(config, quarter, year: none) = {
   let year = if year == none { config.timeRange.startYear } else { year }
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let weekend-fill = if config.colors.at("weekendHighlight", default: none) != none {
-     rgb(config.colors.weekendHighlight).transparentize(85%)
-  } else {
-     rgb(config.colors.at("light2", default: "#f4f4f5")).transparentize(85%)
-  }
-  let primary-font = config.typography.at("primaryFont", default: "Inter")
-  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
-  let secondary-font = config.typography.at("secondaryFont", default: "Inter")
-  let secondary-weight = config.typography.at("secondaryFontWeight", default: 400)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   
   let start-day-idx = get-start-day-idx(config)
   
@@ -24,7 +17,7 @@
   let months = quarter-months(quarter, fiscal-offset: fiscal-offset)
   
   let breadcrumbs = (
-    nav-link(config, str(year), "year", year, color: dark1),
+    nav-link(config, str(year), "year", year, color: colors.dark1),
   )
   
   let title = "Quarter " + str(quarter) + " " + str(year)
@@ -35,7 +28,7 @@
     rows: (1fr,),
     align: top,
     ..months.map(month => {
-      let month-name = get-month-name(month, format: config.generation.pages.month.at("labels", default: "full"))
+      let month-name = get-month-name(month, format: get-month-label-format(config))
       let first-day = first-day-of-month(year, month)
       let num-days = days-in-month(year, month)
       let offset = calc.rem(first-day - start-day-idx + 7, 7)
@@ -46,7 +39,7 @@
           rows: (auto, 1fr),
           row-gutter: 10pt,
           block(width: 100%)[
-            #align(center)[#nav-link(config, text(font: primary-font, size: 11pt, weight: primary-weight)[#month-name], "month", year, month: month, color: dark1)]
+            #align(center)[#nav-link(config, text(font: fonts.primary, size: 11pt, weight: fonts.primaryWeight)[#month-name], "month", year, month: month, color: colors.dark1)]
             #v(2pt)
             #table(
               columns: (1fr,) * 7,
@@ -55,17 +48,17 @@
               fill: (x, y) => {
                 let day-idx = (y - 1) * 7 + x - offset + 1
                 if day-idx >= 1 and day-idx <= num-days {
-                  if is-weekend(year, month, day-idx, config: config) { return weekend-fill }
+                  if is-weekend(year, month, day-idx, config: config) { return colors.weekendFill }
                 }
                 return none
               },
               inset: 0pt,
               align: center + horizon,
-              ..headers.map(h => text(font: secondary-font, size: 5.5pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#h]),
+              ..headers.map(h => text(font: fonts.secondary, size: 5.5pt, weight: fonts.secondaryWeight, fill: colors.dark1.transparentize(50%))[#h]),
               ..range(7 * 6).map(i => {
                 let day-idx = i - offset + 1
                 if day-idx >= 1 and day-idx <= num-days {
-                  nav-link(config, text(font: secondary-font, size: 7.5pt, weight: secondary-weight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: dark1)
+                  nav-link(config, text(font: fonts.secondary, size: 7.5pt, weight: fonts.secondaryWeight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: colors.dark1)
                 } else { [] }
               })
             )
@@ -94,7 +87,7 @@
           let headers = get-day-headers(start-day: start-day-idx, format: "first")
 
           block(width: 100%, height: 100%)[
-            #align(center)[#nav-link(config, text(font: primary-font, size: 10pt, weight: primary-weight)[#month-name], "month", year, month: month, color: dark1)]
+            #align(center)[#nav-link(config, text(font: fonts.primary, size: 10pt, weight: fonts.primaryWeight)[#month-name], "month", year, month: month, color: colors.dark1)]
             #v(5pt)
             #table(
               columns: (1fr,) * 7,
@@ -105,17 +98,17 @@
               fill: (x, y) => {
                 let day-idx = (y - 1) * 7 + x - offset + 1
                 if day-idx >= 1 and day-idx <= num-days {
-                  if is-weekend(year, month, day-idx, config: config) { return weekend-fill }
+                  if is-weekend(year, month, day-idx, config: config) { return colors.weekendFill }
                 }
                 return none
               },
               inset: 0pt,
               align: center + horizon,
-              ..headers.map(h => text(font: secondary-font, size: 5pt, weight: secondary-weight, fill: dark1.transparentize(50%))[#h]),
+              ..headers.map(h => text(font: fonts.secondary, size: 5pt, weight: fonts.secondaryWeight, fill: colors.dark1.transparentize(50%))[#h]),
               ..range(7 * 6).map(i => {
                 let day-idx = i - offset + 1
                 if day-idx >= 1 and day-idx <= num-days {
-                  nav-link(config, text(font: secondary-font, size: 7pt, weight: secondary-weight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: dark1)
+                  nav-link(config, text(font: fonts.secondary, size: 7pt, weight: fonts.secondaryWeight)[#fmt-dd(day-idx)], "day", year, month: month, day: day-idx, color: colors.dark1)
                 } else { [] }
               })
             )

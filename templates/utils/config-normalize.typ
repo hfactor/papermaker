@@ -34,7 +34,8 @@
     secondaryFont: safe-get(d, "secondaryFont", "Inter"),
     secondaryFontWeight: safe-get(d, "secondaryFontWeight", 400),
     fontScale: safe-get(d, "fontScale", 1.0),
-    titleSize: safe-get(d, "titleSize", 24)
+    titleSize: safe-get(d, "titleSize", 24),
+    strokeWidth: safe-get(d, "strokeWidth", 0.5)
   )
   
   let sanitize-planner(d) = (
@@ -42,7 +43,8 @@
     density: safe-get(d, "density", "balanced"),
     weekStart: safe-get(d, "weekStart", 1),
     weekendType: safe-get(d, "weekendType", "sat-sun"),
-    weekendDays: safe-get(d, "weekendDays", (0, 6))
+    weekendDays: safe-get(d, "weekendDays", (0, 6)),
+    gridSpacing: safe-get(d, "gridSpacing", 5)
   )
   
   let sanitize-print(d) = (

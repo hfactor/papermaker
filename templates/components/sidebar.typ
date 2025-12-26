@@ -2,6 +2,7 @@
 #import "../utils/dates.typ": *
 #import "../utils/styles.typ": *
 #import "../utils/hyperlinks.typ": *
+#import "../utils/config-helpers.typ": get-colors, get-fonts
 
 // 1. Planner Module
 #let sidebar-planner(config, start-h: 8, end-h: 20, show-divs: false, time-format: "24h") = {
@@ -10,8 +11,8 @@
 
 // 2. To-Do Module
 #let sidebar-todo(config, title: "To-Do List") = {
-  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let stroke-w = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   
   // Map density to count
   let dens = config.planner.at("density", default: "balanced")
@@ -22,9 +23,9 @@
     rows: (28pt,),
     align: horizon,
     // Checkbox
-    rect(width: 10pt, height: 10pt, stroke: stroke-w + dark2.transparentize(60%), radius: 2pt),
+    rect(width: 10pt, height: 10pt, stroke: fonts.strokeWidth * 1pt + colors.dark2.transparentize(60%), radius: 2pt),
     // Line
-    line(length: 100%, stroke: stroke-w + dark2.transparentize(85%))
+    line(length: 100%, stroke: fonts.strokeWidth * 1pt + colors.dark2.transparentize(85%))
   )
 
   stack(
@@ -41,10 +42,11 @@
 
 // 4. Sidebar Wrapper
 #let sidebar-wrapper(config, content, position: "left") = {
-  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let sw = fonts.strokeWidth * 1pt
   
-  let border-stroke = sw + dark2.transparentize(80%)
+  let border-stroke = sw + colors.dark2.transparentize(80%)
   
   let border = if position == "left" { (right: border-stroke) } 
                else if position == "right" { (left: border-stroke) }

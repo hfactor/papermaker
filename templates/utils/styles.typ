@@ -1,12 +1,13 @@
 // Styling utilities for calendar components
 #import "dates.typ": *
 #import "hyperlinks.typ": *
+#import "config-helpers.typ": get-colors, get-fonts
 
 // Guide patterns (Centre, Thirds) as content instead of patterns
 #let guide-overlay(config, width: 100%, height: 100%) = {
   let guide-conf = config.at("guides", default: (:))
-  let dark1 = rgb(config.colors.at("dark1", default: "#18181b"))
-  let color = dark1.transparentize(80%) // Very subtle
+  let colors = get-colors(config)
+  let color = colors.dark1.transparentize(80%) // Very subtle
   
   box(width: width, height: height)[
     #if guide-conf.at("pageCenter", default: false) {
@@ -39,8 +40,9 @@
 #let paper-pattern(config, width: none, height: none) = {
   let plan-conf = config.at("planner", default: (:))
   let style = plan-conf.at("paperStyle", default: "plain")
-  let dark2 = rgb(config.colors.at("dark2", default: "#71717a"))
-  let color = dark2.transparentize(80%)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let color = colors.dark2.transparentize(80%)
   
   // Use light2 for grid highlights if applicable
   
@@ -57,7 +59,7 @@
     if type(gs) == int { base-spacing = gs * 1mm }
   }
 
-  let stroke-w = config.typography.at("strokeWidth", default: 0.3) * 1pt
+  let stroke-w = fonts.strokeWidth * 1pt
   
   // Calculate proportional spacing if width/height are provided
   let (sx, sy) = (base-spacing, base-spacing)
@@ -75,7 +77,7 @@
     ]
   } else if style == "dot" {
     tiling(size: (sx, sy))[
-      #place(center + horizon, circle(radius: stroke-w * 3, fill: dark2))  // Solid, larger dots
+      #place(center + horizon, circle(radius: stroke-w * 3, fill: colors.dark2))  // Solid, larger dots
     ]
   } else if style == "line" {
     tiling(size: (sx, sy))[
@@ -88,36 +90,39 @@
 
 // Minimal divider
 #let divider(config, color: none) = {
-  let c = if color != none { color } else { rgb(config.colors.at("dark2", default: "#71717a")) }
-  let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let c = if color != none { color } else { colors.dark2 }
+  let sw = fonts.strokeWidth * 1pt
   line(length: 100%, stroke: sw + c)
 }
 
 // Section header with custom font
 #let section-header(config, content, color: none, size: none) = {
-  let c = if color != none { color } else { rgb(config.colors.at("dark1", default: "#000000")) }
-  let base-sz = 12pt * config.typography.at("fontScale", default: 1.0)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let c = if color != none { color } else { colors.dark1 }
+  let base-sz = 12pt * fonts.scale
   let sz = if size != none { size } else { base-sz }
-  let f = config.typography.at("primaryFont", default: "Inter")
-  let w = config.typography.at("primaryFontWeight", default: 700)
   
-  text(font: f, size: sz, weight: w, fill: c)[#content]
+  text(font: fonts.primary, size: sz, weight: fonts.primaryWeight, fill: c)[#content]
 }
 
 // Breadcrumb utility moved to layout.typ for better integration
 
 // Navigation header
 #let nav-header(config, back-link, title, color: none) = {
-  let c = if color != none { color } else { rgb(config.colors.at("dark1", default: "#000000")) }
-  let f = config.typography.at("primaryFont", default: "Lato")
-  let base-sz = 14pt * config.typography.at("fontScale", default: 1.0)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let c = if color != none { color } else { colors.dark1 }
+  let base-sz = 14pt * fonts.scale
   let sz = base-sz
 
   grid(
     columns: (1fr, 2fr, 1fr),
     align: (left, center, right),
     back-link,
-    text(font: f, size: sz, weight: "bold", fill: c)[#title],
+    text(font: fonts.primary, size: sz, weight: "bold", fill: c)[#title],
     []
   )
 }
@@ -164,12 +169,8 @@
 
 // Shared Date Header Component
 #let date-header(config, year, month, day, size: "large", show-divider: true) = {
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let primary-font = config.typography.at("primaryFont", default: "Inter")
-  let primary-weight = config.typography.at("primaryFontWeight", default: 700)
-  let secondary-font = config.typography.at("secondaryFont", default: "Inter")
-  let secondary-weight = config.typography.at("secondaryFontWeight", default: 400)
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
   
   let month-name = get-month-name(month, format: "full")
   let dow = day-of-week(year, month, day)
@@ -181,25 +182,25 @@
     (10pt, 32pt, 10pt)
   }
   
-  let stroke-w = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let stroke-w = fonts.strokeWidth * 1pt
   let line-h = if size == "large" { 24pt } else { 14pt }
   
   block(width: 100%)[
-    #nav-link(config, text(font: primary-font, size: year-sz, weight: primary-weight, fill: dark1)[#str(year)], "year", year, color: dark1)
+    #nav-link(config, text(font: fonts.primary, size: year-sz, weight: fonts.primaryWeight, fill: colors.dark1)[#str(year)], "year", year, color: colors.dark1)
     #v(if size == "large" { 2pt } else { 0pt })
     #grid(
       columns: (auto, auto, auto),
       column-gutter: 12pt,
       align: horizon,
-      text(font: primary-font, size: date-sz, weight: primary-weight, fill: dark1)[#fmt-dd(day)],
+      text(font: fonts.primary, size: date-sz, weight: fonts.primaryWeight, fill: colors.dark1)[#fmt-dd(day)],
       if show-divider {
-        line(start: (0pt, -line-h), end: (0pt, line-h), stroke: stroke-w + dark2.transparentize(80%))
+        line(start: (0pt, -line-h), end: (0pt, line-h), stroke: stroke-w + colors.dark2.transparentize(80%))
       },
       stack(
         dir: ttb,
         spacing: 6pt, // Increased spacing
-        nav-link(config, text(font: secondary-font, size: sub-sz, weight: secondary-weight, fill: dark2.transparentize(40%))[#month-name], "month", year, month: month, color: dark2.transparentize(40%)),
-        text(font: secondary-font, size: sub-sz - 2pt, weight: secondary-weight, fill: dark2.transparentize(40%))[#day-name] // Smaller day
+        nav-link(config, text(font: fonts.secondary, size: sub-sz, weight: fonts.secondaryWeight, fill: colors.dark2.transparentize(40%))[#month-name], "month", year, month: month, color: colors.dark2.transparentize(40%)),
+        text(font: fonts.secondary, size: sub-sz - 2pt, weight: fonts.secondaryWeight, fill: colors.dark2.transparentize(40%))[#day-name] // Smaller day
       )
     )
   ]
@@ -221,8 +222,9 @@
 
 // Shared Planner Grid Component
 #let planner-grid(config, start-h: 6, end-h: 22, show-divs: false, time-format: "24h", text-size: 8pt, gutter: 8pt) = {
-  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let stroke-w = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let stroke-w = fonts.strokeWidth * 1pt
   
   let sh = if type(start-h) == int { start-h } else { 8 }
   let eh = if type(end-h) == int { end-h } else { 20 }
@@ -260,14 +262,14 @@
         
         // Row 1: Time + Line
         items.push(align(right + horizon)[
-          #text(size: text-size, weight: "bold", fill: dark2.transparentize(40%))[#t]
+          #text(size: text-size, weight: "bold", fill: colors.dark2.transparentize(40%))[#t]
         ])
-        items.push(align(horizon)[#line(length: 100%, stroke: stroke-w + dark2.transparentize(80%))])
+        items.push(align(horizon)[#line(length: 100%, stroke: stroke-w + colors.dark2.transparentize(80%))])
         
         // Row 2: Empty + Half-hour Line (Conditional)
         if show-divs and h < eh {
           items.push([])
-          items.push(align(horizon)[#line(length: 100%, stroke: (thickness: stroke-w, paint: dark2.transparentize(90%), dash: "dotted"))])
+          items.push(align(horizon)[#line(length: 100%, stroke: (thickness: stroke-w, paint: colors.dark2.transparentize(90%), dash: "dotted"))])
         }
       }
       items
@@ -277,11 +279,11 @@
 
 // Unified Planner Column Component
 #let planner-column(config, header, start-h: 8, end-h: 20, show-divs: false, time-format: "24h", text-size: 8pt, show-border: true, gutter: 8pt) = {
-  let dark1 = rgb(config.colors.at("dark1", default: "#000000"))
-  let dark2 = rgb(config.colors.at("dark2", default: "#000000"))
-  let sw = config.typography.at("strokeWidth", default: 0.5) * 1pt
+  let colors = get-colors(config)
+  let fonts = get-fonts(config)
+  let sw = fonts.strokeWidth * 1pt
   
-  let st = if show-border { sw + dark2.transparentize(80%) } else { none }
+  let st = if show-border { sw + colors.dark2.transparentize(80%) } else { none }
   
   rect(
     width: 100%,
