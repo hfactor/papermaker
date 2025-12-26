@@ -48,10 +48,10 @@
   
   // Density mapping - tighter spacing for dots
   let dens = plan-conf.at("density", default: "balanced")
-  let base-spacing = if type(dens) == int { dens * 1mm }
-                    else if dens == "compact" { 4mm }      // Tighter for dots
-                    else if dens == "spaced" { 8mm }       // Tighter for dots
-                    else { 5.5mm } // balanced - tighter for dots
+  let base-spacing = if type(dens) == int { dens * 2mm }
+                    else if dens == "compact" { 6mm }      // Tighter for dots
+                    else if dens == "spaced" { 10mm }       // Tighter for dots
+                    else { 6mm } // balanced - tighter for dots
   
   if "gridSpacing" in plan-conf {
     let gs = plan-conf.gridSpacing
@@ -77,7 +77,7 @@
     ]
   } else if style == "dot" {
     tiling(size: (sx, sy))[
-      #place(center + horizon, circle(radius: stroke-w * 3, fill: colors.dark2))  // Solid, larger dots
+      #place(center + horizon, circle(radius: stroke-w * 1.5, fill: colors.dark2))  // Solid, larger dots
     ]
   } else if style == "line" {
     tiling(size: (sx, sy))[

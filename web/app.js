@@ -3,29 +3,60 @@
  */
 
 const PRESETS = {
-    professional: {
-        planner: { paperStyle: 'dot', density: 'compact' },
-        colors: { dark1: '#0f172a', light1: '#ffffff', accent: '#4f46e5' },
+    dracula: {
+        name: 'Dracula (Dark)',
+        description: 'Popular dark theme with vibrant accents',
+        planner: { paperStyle: 'dot', density: 'balanced' },
+        colors: { dark1: '#f8f8f2', light1: '#282a36', accent: '#bd93f9' },
         typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     },
-    minimal: {
+    nord: {
+        name: 'Nord (Modern)',
+        description: 'Arctic, north-bluish color palette',
         planner: { paperStyle: 'line', density: 'balanced' },
-        colors: { dark1: '#000000', light1: '#ffffff', accent: '#000000' },
+        colors: { dark1: '#2e3440', light1: '#eceff4', accent: '#88c0d0' },
         typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     },
-    academic: {
+    gruvbox: {
+        name: 'Gruvbox Light (Minimal)',
+        description: 'Retro groove with warm, earthy tones',
         planner: { paperStyle: 'line', density: 'balanced' },
-        colors: { dark1: '#422006', light1: '#fdfbf7', accent: '#92400e' },
-        typography: { primaryFont: 'Playfair Display', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+        colors: { dark1: '#3c3836', light1: '#fbf1c7', accent: '#d65d0e' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     },
-    creative: {
-        planner: { paperStyle: 'plain', density: 'spaced' },
-        colors: { dark1: '#312e81', light1: '#faf5ff', accent: '#db2777' },
-        typography: { primaryFont: 'Outfit', primaryFontWeight: 700, secondaryFont: 'Outfit', secondaryFontWeight: 400 }
-    },
-    focused: {
+    solarized: {
+        name: 'Solarized Light (Minimal)',
+        description: 'Precision colors for reduced eye strain',
         planner: { paperStyle: 'line', density: 'compact' },
-        colors: { dark1: '#ffffff', light1: '#09090b', accent: '#4f46e5' },
+        colors: { dark1: '#586e75', light1: '#fdf6e3', accent: '#268bd2' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+    },
+    monokai: {
+        name: 'Monokai Pro (Dark)',
+        description: 'Iconic dark theme with vibrant highlights',
+        planner: { paperStyle: 'dot', density: 'compact' },
+        colors: { dark1: '#fcfcfa', light1: '#2d2a2e', accent: '#ffd866' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+    },
+    catppuccin: {
+        name: 'Catppuccin Latte (Warm)',
+        description: 'Soothing pastel theme for comfort',
+        planner: { paperStyle: 'dot', density: 'balanced' },
+        colors: { dark1: '#4c4f69', light1: '#eff1f5', accent: '#8839ef' },
+        typography: { primaryFont: 'Outfit', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+    },
+    tokyonight: {
+        name: 'Tokyo Night (Dark)',
+        description: 'Clean dark theme inspired by Tokyo nights',
+        planner: { paperStyle: 'dot', density: 'balanced' },
+        colors: { dark1: '#c0caf5', light1: '#1a1b26', accent: '#7aa2f7' },
+        typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
+    },
+    github: {
+        name: 'GitHub Light (Modern)',
+        description: 'Clean and familiar GitHub aesthetic',
+        planner: { paperStyle: 'line', density: 'balanced' },
+        colors: { dark1: '#24292f', light1: '#ffffff', accent: '#0969da' },
         typography: { primaryFont: 'Inter', primaryFontWeight: 700, secondaryFont: 'Inter', secondaryFontWeight: 400 }
     }
 };
@@ -63,10 +94,37 @@ class PaperMaker {
 
     init() {
         this.setupEventListeners();
+        this.setupMobileMenu();
         this.syncUI();
         this.setStep(1); // Ensure "Setup" is active on load
         this.updatePageCount();
         this.updateSummary();
+    }
+
+    setupMobileMenu() {
+        const toggle = document.getElementById('mobileMenuToggle');
+        const overlay = document.getElementById('mobileOverlay');
+        const sidebar = document.querySelector('.app-sidebar');
+
+        const closeSidebar = () => {
+            sidebar?.classList.remove('mobile-visible');
+            overlay?.classList.remove('visible');
+        };
+
+        const openSidebar = () => {
+            sidebar?.classList.add('mobile-visible');
+            overlay?.classList.add('visible');
+        };
+
+        toggle?.addEventListener('click', () => {
+            if (sidebar?.classList.contains('mobile-visible')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        overlay?.addEventListener('click', closeSidebar);
     }
 
     setupEventListeners() {
@@ -148,15 +206,51 @@ class PaperMaker {
         });
 
         // Choice Rows (Paper Style, Density, etc.)
-        document.querySelectorAll('.choice-row').forEach(row => {
-            row.addEventListener('click', (e) => {
-                const item = e.target.closest('.choice-item');
-                if (!item) return;
-                this.update(row.dataset.id, item.dataset.value);
-            });
-        });
+        document.querySelectorAll('.choice-row, .visual-choice-row').forEach(row => {
+            const items = row.querySelectorAll('.choice-item, .visual-choice');
 
-        // Colors
+            items.forEach(item => {
+                // Click handler
+                item.addEventListener('click', () => {
+                    const parent = item.closest('.choice-row, .visual-choice-row');
+                    const siblings = parent.querySelectorAll('.choice-item, .visual-choice');
+
+                    siblings.forEach(s => {
+                        s.classList.remove('active');
+                        s.setAttribute('aria-checked', 'false');
+                    });
+
+                    item.classList.add('active');
+                    item.setAttribute('aria-checked', 'true');
+
+                    this.update(parent.dataset.id, item.dataset.value);
+                });
+
+                // Keyboard navigation
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        item.click();
+                    }
+
+                    const parent = item.closest('.choice-row, .visual-choice-row');
+                    const siblings = Array.from(parent.querySelectorAll('.choice-item, .visual-choice'));
+                    const currentIndex = siblings.indexOf(item);
+
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : siblings.length - 1;
+                        siblings[prevIndex].focus();
+                    }
+
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const nextIndex = currentIndex < siblings.length - 1 ? currentIndex + 1 : 0;
+                        siblings[nextIndex].focus();
+                    }
+                });
+            });
+        }); // Colors
         ['colorDark1', 'colorLight1', 'colorAccent'].forEach(id => {
             const el = document.getElementById(id);
             const hexInput = document.getElementById(`hex-${id}`);
@@ -345,20 +439,40 @@ class PaperMaker {
 
     setStep(n) {
         this.currentStep = n;
-        document.querySelectorAll('.wizard-step').forEach((s, i) => {
-            const stepNum = i + 1;
-            s.style.display = stepNum === n ? 'block' : 'none';
-            s.classList.toggle('active', stepNum === n);
-            s.classList.toggle('done', stepNum < n);
+        document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('visible'));
+        document.getElementById(`step-${n}`)?.classList.add('visible');
+
+        const indicators = document.querySelectorAll('.step-indicator');
+        indicators.forEach((ind, idx) => {
+            ind.classList.remove('active', 'done');
+            ind.setAttribute('aria-current', 'false');
+
+            if (idx + 1 === n) {
+                ind.classList.add('active');
+                ind.setAttribute('aria-current', 'step');
+            } else if (idx + 1 < n) {
+                ind.classList.add('done');
+            }
+
+            // Add click and keyboard handlers
+            ind.onclick = () => this.setStep(idx + 1);
+            ind.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.setStep(idx + 1);
+                }
+            };
         });
-        document.querySelectorAll('.step-indicator').forEach((s, idx) => {
-            const stepNum = idx + 1;
-            s.classList.toggle('active', stepNum === n);
-            s.classList.toggle('done', stepNum < n);
-        });
+
         document.getElementById('prevBtn').disabled = n === 1;
         const nextBtn = document.getElementById('nextBtn');
-        nextBtn.innerText = n === 3 ? 'Build Planner' : 'Continue →';
+        if (n === 3) {
+            nextBtn.textContent = 'Generate PDF →';
+            nextBtn.onclick = () => this.generatePDF();
+        } else {
+            nextBtn.textContent = 'Continue →';
+            nextBtn.onclick = () => this.setStep(n + 1);
+        }
 
         // Disable build button if on step 3 and no pages selected
         if (n === 3) {

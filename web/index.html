@@ -6,14 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PaperMaker | The Professional Planner</title>
     <link rel="stylesheet" href="index.css">
+    <!-- Optimized Font Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
+    <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
-        rel="stylesheet">
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+    </noscript>
 </head>
 
 <body class="linear-v7">
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+        ☰
+    </button>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
     <div class="app-layout">
         <!-- Sidebar Intro / Info -->
         <aside class="app-sidebar">
@@ -45,9 +58,9 @@
                 <div class="credits">Created by <a href="https://hiran.in" target="_blank">Hiran Venugopalan</a></div>
                 <div class="license">Licensed under AGPL V3</div>
                 <div class="social-links">
-                    <a href="https://github.com/hiranv" target="_blank">GitHub</a>
-                    <a href="https://linkedin.com/in/hiranvenugopalan" target="_blank">LinkedIn</a>
-                    <a href="https://instagram.com/hiran.v" target="_blank">Instagram</a>
+                    <a href="https://github.com/hfactor" target="_blank">GitHub</a>
+                    <a href="https://linkedin.com/in/hfactor" target="_blank">LinkedIn</a>
+                    <a href="https://instagram.com/hfactor_" target="_blank">Instagram</a>
                 </div>
             </div>
         </aside>
@@ -55,20 +68,20 @@
         <!-- Main Config Wizard -->
         <main class="app-main">
             <header class="wizard-header">
-                <div class="wizard-progress">
-                    <div class="step-indicator" data-step="1">
-                        <span class="dot"></span>
+                <nav class="wizard-progress" role="navigation" aria-label="Configuration steps">
+                    <div class="step-indicator" data-step="1" role="button" tabindex="0" aria-label="Step 1: Setup">
+                        <span class="dot" aria-hidden="true"></span>
                         <span class="label">Setup</span>
                     </div>
-                    <div class="step-indicator" data-step="2">
-                        <span class="dot"></span>
+                    <div class="step-indicator" data-step="2" role="button" tabindex="0" aria-label="Step 2: Customise">
+                        <span class="dot" aria-hidden="true"></span>
                         <span class="label">Customise</span>
                     </div>
-                    <div class="step-indicator" data-step="3">
-                        <span class="dot"></span>
+                    <div class="step-indicator" data-step="3" role="button" tabindex="0" aria-label="Step 3: Style">
+                        <span class="dot" aria-hidden="true"></span>
                         <span class="label">Style</span>
                     </div>
-                </div>
+                </nav>
             </header>
 
             <div class="wizard-content">
@@ -194,31 +207,42 @@
                     <section class="config-group" style="padding-top: 2rem; border-top: 1px solid var(--border);">
                         <div class="field-row" style="grid-template-columns: 1.2fr 1fr 1fr;">
                             <div class="field">
-                                <label>Orientation</label>
-                                <div class="visual-choice-row" data-id="orientation">
-                                    <div class="visual-choice" data-value="portrait">
+                                <label for="orientation">Orientation</label>
+                                <div class="visual-choice-row" data-id="orientation" role="radiogroup"
+                                    aria-label="Page orientation">
+                                    <button type="button" class="visual-choice" data-value="portrait" role="radio"
+                                        aria-checked="false">
                                         <span>Portrait</span>
-                                    </div>
-                                    <div class="visual-choice active" data-value="landscape">
+                                    </button>
+                                    <button type="button" class="visual-choice active" data-value="landscape"
+                                        role="radio" aria-checked="true">
                                         <span>Landscape</span>
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
                             <div class="field">
-                                <label>Paper Style</label>
-                                <div class="choice-row" data-id="paperStyle">
-                                    <div class="choice-item" data-value="line">Lined</div>
-                                    <div class="choice-item" data-value="grid">Grid</div>
-                                    <div class="choice-item" data-value="dot">Dot</div>
-                                    <div class="choice-item" data-value="plain">Plain</div>
+                                <label for="paperStyle">Paper Style</label>
+                                <div class="choice-row" data-id="paperStyle" role="radiogroup" aria-label="Paper style">
+                                    <button type="button" class="choice-item" data-value="line" role="radio"
+                                        aria-checked="false">Lined</button>
+                                    <button type="button" class="choice-item" data-value="grid" role="radio"
+                                        aria-checked="false">Grid</button>
+                                    <button type="button" class="choice-item" data-value="dot" role="radio"
+                                        aria-checked="false">Dot</button>
+                                    <button type="button" class="choice-item" data-value="plain" role="radio"
+                                        aria-checked="false">Plain</button>
                                 </div>
                             </div>
                             <div class="field">
-                                <label>Pattern Density</label>
-                                <div class="choice-row" data-id="density">
-                                    <div class="choice-item" data-value="compact">Compact</div>
-                                    <div class="choice-item" data-value="balanced">Balanced</div>
-                                    <div class="choice-item" data-value="spaced">Spacious</div>
+                                <label for="density">Pattern Density</label>
+                                <div class="choice-row" data-id="density" role="radiogroup"
+                                    aria-label="Pattern density">
+                                    <button type="button" class="choice-item" data-value="compact" role="radio"
+                                        aria-checked="false">Compact</button>
+                                    <button type="button" class="choice-item" data-value="balanced" role="radio"
+                                        aria-checked="false">Balanced</button>
+                                    <button type="button" class="choice-item" data-value="spaced" role="radio"
+                                        aria-checked="false">Spacious</button>
                                 </div>
                             </div>
                         </div>
@@ -301,11 +325,13 @@
                                             </select>
                                         </div>
                                         <div class="field">
-                                            <label>Side</label>
-                                            <div class="choice-row" data-id="sidebarPosition">
-                                                <div class="choice-item" data-value="left">Left</div>
-                                                <div class="choice-item active" data-value="right">Right
-                                                </div>
+                                            <label for="sidebarPosition">Side</label>
+                                            <div class="choice-row" data-id="sidebarPosition" role="radiogroup"
+                                                aria-label="Sidebar position">
+                                                <button type="button" class="choice-item" data-value="left" role="radio"
+                                                    aria-checked="false">Left</button>
+                                                <button type="button" class="choice-item active" data-value="right"
+                                                    role="radio" aria-checked="true">Right</button>
                                             </div>
                                         </div>
                                     </div>
@@ -313,19 +339,23 @@
                                     <div id="plannerOptions" class="disclosure-linear">
                                         <div class="field-row">
                                             <div class="field">
-                                                <label>Format</label>
-                                                <div class="choice-row" data-id="timeFormat">
-                                                    <div class="choice-item" data-value="12h">12h</div>
-                                                    <div class="choice-item active" data-value="24h">24h
-                                                    </div>
+                                                <label for="timeFormat">Format</label>
+                                                <div class="choice-row" data-id="timeFormat" role="radiogroup"
+                                                    aria-label="Time format">
+                                                    <button type="button" class="choice-item" data-value="12h"
+                                                        role="radio" aria-checked="false">12h</button>
+                                                    <button type="button" class="choice-item active" data-value="24h"
+                                                        role="radio" aria-checked="true">24h</button>
                                                 </div>
                                             </div>
                                             <div class="field">
-                                                <label>Show 30-min Intervals</label>
-                                                <div class="choice-row" data-id="showHalfHour">
-                                                    <div class="choice-item" data-value="true">Show</div>
-                                                    <div class="choice-item active" data-value="false">Hide
-                                                    </div>
+                                                <label for="showHalfHour">Show 30-min Intervals</label>
+                                                <div class="choice-row" data-id="showHalfHour" role="radiogroup"
+                                                    aria-label="Show half hour intervals">
+                                                    <button type="button" class="choice-item" data-value="true"
+                                                        role="radio" aria-checked="false">Show</button>
+                                                    <button type="button" class="choice-item active" data-value="false"
+                                                        role="radio" aria-checked="true">Hide</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -357,13 +387,17 @@
                         </div>
                         <div class="field-row">
                             <div class="field">
-                                <label>Pro Presets</label>
+                                <label>Visual Presets</label>
                                 <select id="activePreset">
-                                    <option value="professional" selected>Standard Pro (Slate)</option>
-                                    <option value="minimal">Minimal Ink (Mono)</option>
-                                    <option value="academic">Academic (Amber)</option>
-                                    <option value="creative">Creative (Vibrant)</option>
-                                    <option value="focused">High Focus (Dark)</option>
+                                    <option value="">Custom</option>
+                                    <option value="dracula">Dracula (Dark)</option>
+                                    <option value="nord">Nord (Modern)</option>
+                                    <option value="gruvbox">Gruvbox Light (Minimal)</option>
+                                    <option value="solarized">Solarized Light (Minimal)</option>
+                                    <option value="monokai">Monokai Pro (Dark)</option>
+                                    <option value="catppuccin">Catppuccin Latte (Warm)</option>
+                                    <option value="tokyonight">Tokyo Night (Dark)</option>
+                                    <option value="github">GitHub Light (Modern)</option>
                                 </select>
                             </div>
                         </div>
