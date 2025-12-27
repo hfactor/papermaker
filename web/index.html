@@ -19,10 +19,16 @@
 </head>
 
 <body class="linear-v7">
-    <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
-        ☰
-    </button>
+    <!-- Mobile Header with Branding -->
+    <header class="mobile-header">
+        <div class="brand">
+            <img src="logo.svg" alt="PaperMaker" class="logo-mark">
+            <span class="logo-text">PaperMaker</span>
+        </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+            ☰
+        </button>
+    </header>
 
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -32,7 +38,7 @@
         <aside class="app-sidebar">
             <div class="sidebar-top">
                 <div class="brand">
-                    <span class="logo-mark">PM</span>
+                    <img src="logo.svg" alt="PaperMaker" class="logo-mark">
                     <span class="logo-text">PaperMaker</span>
                 </div>
                 <h1 class="hero-title">Crafting your perfect <span class="highlight">analog</span> ritual.</h1>
@@ -94,7 +100,7 @@
                         <div class="field-row">
                             <div class="field">
                                 <label>Start Year</label>
-                                <input type="number" id="startYear" value="2025">
+                                <input type="number" id="startYear" value="2026">
                             </div>
                             <div class="field">
                                 <label for="startMonth">Starting Month</label>
@@ -160,7 +166,7 @@
 
                         <div class="inclusion-grid density-high">
                             <label class="inclusion-item">
-                                <input type="checkbox" id="includeCover">
+                                <input type="checkbox" id="includeCover" checked>
                                 <div class="inclusion-box">
                                     <span class="name">Front Cover</span>
                                 </div>
@@ -184,7 +190,7 @@
                                 </div>
                             </label>
                             <label class="inclusion-item">
-                                <input type="checkbox" id="includeWeek" checked>
+                                <input type="checkbox" id="includeWeek">
                                 <div class="inclusion-box">
                                     <span class="name">Weekly Planner</span>
                                 </div>
@@ -205,11 +211,18 @@
                     </section>
 
                     <section class="config-group" style="padding-top: 2rem; border-top: 1px solid var(--border);">
+                        <div class="section-label" style="margin-bottom: 1.5rem;">Output Format</div>
                         <div class="field-row" style="grid-template-columns: 1.2fr 1fr 1fr;">
                             <div class="field">
                                 <label for="orientation">Orientation</label>
-                                <div class="visual-choice-row" data-id="orientation" role="radiogroup"
-                                    aria-label="Page orientation">
+                                <!-- Mobile Dropdown -->
+                                <select id="orientationSelect" class="mobile-only-select">
+                                    <option value="portrait">Portrait</option>
+                                    <option value="landscape" selected>Landscape</option>
+                                </select>
+                                <!-- Desktop Buttons -->
+                                <div class="visual-choice-row desktop-only-buttons" data-id="orientation"
+                                    role="radiogroup" aria-label="Page orientation">
                                     <button type="button" class="visual-choice" data-value="portrait" role="radio"
                                         aria-checked="false">
                                         <span>Portrait</span>
@@ -222,9 +235,18 @@
                             </div>
                             <div class="field">
                                 <label for="paperStyle">Paper Style</label>
-                                <div class="choice-row" data-id="paperStyle" role="radiogroup" aria-label="Paper style">
-                                    <button type="button" class="choice-item" data-value="line" role="radio"
-                                        aria-checked="false">Lined</button>
+                                <!-- Mobile Dropdown -->
+                                <select id="paperStyleSelect" class="mobile-only-select">
+                                    <option value="line" selected>Lined</option>
+                                    <option value="grid">Grid</option>
+                                    <option value="dot">Dot</option>
+                                    <option value="plain">Plain</option>
+                                </select>
+                                <!-- Desktop Buttons -->
+                                <div class="choice-row desktop-only-buttons" data-id="paperStyle" role="radiogroup"
+                                    aria-label="Paper style">
+                                    <button type="button" class="choice-item active" data-value="line" role="radio"
+                                        aria-checked="true">Lined</button>
                                     <button type="button" class="choice-item" data-value="grid" role="radio"
                                         aria-checked="false">Grid</button>
                                     <button type="button" class="choice-item" data-value="dot" role="radio"
@@ -235,12 +257,19 @@
                             </div>
                             <div class="field">
                                 <label for="density">Pattern Density</label>
-                                <div class="choice-row" data-id="density" role="radiogroup"
+                                <!-- Mobile Dropdown -->
+                                <select id="densitySelect" class="mobile-only-select">
+                                    <option value="compact">Compact</option>
+                                    <option value="balanced" selected>Balanced</option>
+                                    <option value="spaced">Spacious</option>
+                                </select>
+                                <!-- Desktop Buttons -->
+                                <div class="choice-row desktop-only-buttons" data-id="density" role="radiogroup"
                                     aria-label="Pattern density">
                                     <button type="button" class="choice-item" data-value="compact" role="radio"
                                         aria-checked="false">Compact</button>
-                                    <button type="button" class="choice-item" data-value="balanced" role="radio"
-                                        aria-checked="false">Balanced</button>
+                                    <button type="button" class="choice-item active" data-value="balanced" role="radio"
+                                        aria-checked="true">Balanced</button>
                                     <button type="button" class="choice-item" data-value="spaced" role="radio"
                                         aria-checked="false">Spacious</button>
                                 </div>
@@ -342,10 +371,10 @@
                                                 <label for="timeFormat">Format</label>
                                                 <div class="choice-row" data-id="timeFormat" role="radiogroup"
                                                     aria-label="Time format">
-                                                    <button type="button" class="choice-item" data-value="12h"
-                                                        role="radio" aria-checked="false">12h</button>
-                                                    <button type="button" class="choice-item active" data-value="24h"
-                                                        role="radio" aria-checked="true">24h</button>
+                                                    <button type="button" class="choice-item active" data-value="12h"
+                                                        role="radio" aria-checked="true">12h</button>
+                                                    <button type="button" class="choice-item" data-value="24h"
+                                                        role="radio" aria-checked="false">24h</button>
                                                 </div>
                                             </div>
                                             <div class="field">
@@ -391,7 +420,7 @@
                                 <select id="activePreset">
                                     <option value="">Custom</option>
                                     <option value="dracula">Dracula (Dark)</option>
-                                    <option value="nord">Nord (Modern)</option>
+                                    <option value="nord" selected>Nord (Modern)</option>
                                     <option value="gruvbox">Gruvbox Light (Minimal)</option>
                                     <option value="solarized">Solarized Light (Minimal)</option>
                                     <option value="monokai">Monokai Pro (Dark)</option>

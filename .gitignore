@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Build outputs
+output/
+*.pdf
+
+# Cache and temporary files
+cache/
+uploads/
+temp-*.json
+*-verify.json
+*.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Debug files
+debug_*.typ

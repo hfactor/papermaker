@@ -80,12 +80,12 @@ class PaperMaker {
             generation: {
                 order: 'sequential',
                 pages: {
-                    cover: { enabled: false, title: 'PaperMaker Planner', imageUrl: '' },
+                    cover: { enabled: true, title: 'PaperMaker Planner', imageUrl: '' },
                     year: { enabled: true },
                     quarter: { enabled: false, type: 'calendar' },
                     month: { enabled: true },
-                    week: { enabled: true },
-                    day: { enabled: true, extraDaily: false, sidebar: 'right', sidebarEnabled: true, sidebarModule: 'planner', startTime: '08:00', endTime: '20:00', timeFormat: '24h', showHalfHour: false }
+                    week: { enabled: false },
+                    day: { enabled: true, extraDaily: false, sidebar: 'right', sidebarEnabled: true, sidebarModule: 'planner', startTime: '08:00', endTime: '20:00', timeFormat: '12h', showHalfHour: false }
                 }
             },
             planner: { paperStyle: 'line', density: 'balanced', weekStart: 1, weekendType: 'sat-sun', weekendDays: [0, 6] }
@@ -156,6 +156,11 @@ class PaperMaker {
                 this.update(id, e.target.checked);
             });
         });
+
+        // Mobile Dropdowns (sync with buttons)
+        document.getElementById('orientationSelect')?.addEventListener('change', (e) => this.update('orientation', e.target.value));
+        document.getElementById('paperStyleSelect')?.addEventListener('change', (e) => this.update('paperStyle', e.target.value));
+        document.getElementById('densitySelect')?.addEventListener('change', (e) => this.update('density', e.target.value));
 
         // Step 2 Details
         document.getElementById('quarterType')?.addEventListener('change', (e) => this.update('quarterType', e.target.value));
@@ -689,14 +694,14 @@ class PaperMaker {
     }
 
     saveState() {
-        // Create a copy without imageUrl (don't persist images)
-        const configToSave = JSON.parse(JSON.stringify(this.config));
-        if (configToSave.generation?.pages?.cover) {
-            delete configToSave.generation.pages.cover.imageUrl;
-        }
-        localStorage.setItem('papermaker-config', JSON.stringify(configToSave));
+        // localStorage disabled - always use defaults on refresh
+        // const configToSave = { ...this.config };
+        // localStorage.setItem('papermaker-config', JSON.stringify(configToSave));
     }
-    loadState() { return JSON.parse(localStorage.getItem('papermaker-config')); }
+    loadState() {
+        // localStorage disabled - always use defaults on refresh
+        return null;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => { window.app = new PaperMaker(); });

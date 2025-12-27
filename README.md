@@ -1,111 +1,97 @@
-# PDF Calendar Generator
+# PaperMaker
 
-A configurable PDF calendar system designed for digital note-taking apps like **GoodNotes**, **Notability**, and **Remarkable**. Create minimal, functional calendars with intelligent hyperlinks for seamless navigation.
+A modern, configurable PDF planner generator designed for digital note-taking apps like **GoodNotes**, **Notability**, and **Remarkable**. Create beautiful, functional planners with intelligent hyperlinks for seamless navigation.
 
-## Features
+![PaperMaker](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 
-- ✨ **Configurable Pages**: Choose from Year, Quarter, Month, Week, and Daily spreads
+## ✨ Features
+
+- 🎨 **Simple Web UI**: Modern, responsive interface for easy configuration
+- 📅 **Flexible Pages**: Year, Quarter, Month, Week, and Daily spreads
 - 🔗 **Smart Hyperlinks**: Navigate between pages with clickable links
-- 🎨 **Customizable**: Fonts, colors, paper styles (grid/dot/line/plain)
-- 📱 **Digital-First**: Optimized for tablet note-taking apps
-- 🎯 **Minimal Design**: Clean, functional aesthetics
+- 🎨 **Visual Presets**: 8 curated color themes (Dracula, Nord, Gruvbox, etc.)
+- 🖋️ **Customizable**: Fonts, colors, paper styles (grid/dot/line/plain)
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Install Typst
+### Prerequisites
+
+- **Node.js** (v14 or higher)
+- **Typst** (for PDF generation)
+
+### 1. Install Dependencies
 
 ```bash
-# macOS
+# Install Typst
 brew install typst
 
-# Or download from: https://github.com/typst/typst
+# Install Node.js dependencies
+npm install
 ```
 
-### 2. Configure Your Calendar
-
-Open `web/index.html` in your browser to create your configuration:
+### 2. Start the Web Server
 
 ```bash
-open web/index.html
+npm start
 ```
 
-Fill out the form and download your configuration JSON file.
+The web interface will be available at `http://localhost:3000`
 
-### 3. Generate PDF
+### 3. Configure Your Planner
 
-```bash
-./build.sh path/to/your-config.json
-```
+1. Open `http://localhost:3000` in your browser
+2. Configure your planner settings:
+   - **Timeline**: Year, start month, duration
+   - **Pages**: Select which spreads to include
+   - **Style**: Choose orientation, paper style, colors
+3. Click **Generate PDF**
 
-The PDF will be generated in the `output/` directory.
+Your planner will be generated in the `output/` directory.
 
-## Configuration Options
+## 📋 Configuration Options
 
-### Pages to Include
+### Step 1: Setup
 
-- **Year Calendar**: Full year overview with 12-month grid
-- **Quarter Spreads**: 3-month overview per quarter (Q1-Q4)
-- **Month Spreads**: Detailed monthly calendars
-- **Weekly Spreads**: 7-day layouts
-- **Daily Pages**: One page per day
+- **Timeline**: Start year (2000-2100), month, duration
+- **Week Settings**: Week start day, weekend type
+- **Page Selection**: Year, Quarter, Month, Week, Daily pages
 
-### Calendar Settings
+### Step 2: Customise
 
-- **Year**: 2000-2100
-- **Week Starts On**: Monday or Sunday
-- **Weekend Color**: Custom color for weekend highlighting
-- **Month Format**: Full (January), Abbreviated (Jan), or Single (J)
+- **Output Format**: Portrait/Landscape, paper style, pattern density
+- **Visual Presets**: 8 curated themes or custom colors
+- **Daily Page**: Sidebar options, time format, active hours
 
-### Paper Style
+### Step 3: Style
 
-- **Plain**: No background pattern
-- **Grid**: Grid pattern for structured notes
-- **Dot**: Dot grid pattern
-- **Line**: Horizontal lines
+- **Typography**: Primary and secondary fonts with weights
+- **Colors**: Dark, light, and accent colors
+- **Visual Themes**: Dracula, Nord, Gruvbox, Solarized, and more
 
-### Customization
+## 🎨 Visual Presets
 
-- **Font**: Choose from preset fonts or specify custom
-- **Primary Color**: Main color for text and accents
-- **First Page Title**: Custom title for your calendar
+- **Dracula**: Dark theme with vibrant purple accents
+- **Nord**: Arctic, north-bluish color palette
+- **Gruvbox**: Retro groove with warm, earthy tones
+- **Solarized**: Precision colors for reduced eye strain
+- **Monokai**: Iconic dark theme with vibrant highlights
+- **Catppuccin**: Soothing pastel theme
+- **Tokyo Night**: Clean dark theme inspired by Tokyo nights
+- **GitHub**: Clean and familiar GitHub aesthetic
 
-## Example Configurations
-
-### Full Calendar (All Pages)
-
-```bash
-./build.sh examples/full-calendar.json
-```
-
-Includes: Year + Quarters + Months + Weeks + Daily pages
-
-### Monthly Only
-
-```bash
-./build.sh examples/monthly-only.json
-```
-
-Includes: Year overview + Monthly spreads
-
-### Minimal (Daily Planner)
-
-```bash
-./build.sh examples/minimal.json
-```
-
-Includes: Year overview + Daily pages with lined paper
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 papertools/
-├── web/                    # Configuration interface
-│   ├── index.html         # Web form
-│   ├── styles.css         # Styling
+├── web/                    # Web interface
+│   ├── index.html         # Main UI
+│   ├── index.css          # Styling
 │   └── app.js             # Configuration logic
 ├── templates/             # Typst templates
 │   ├── main.typ           # Main orchestrator
 │   ├── components/        # Page components
+│   │   ├── cover.typ
 │   │   ├── year.typ
 │   │   ├── quarter.typ
 │   │   ├── month.typ
@@ -116,55 +102,80 @@ papertools/
 │       ├── hyperlinks.typ
 │       └── styles.typ
 ├── examples/              # Example configurations
-├── output/                # Generated PDFs
+├── fonts/                 # Font files
+├── server.js              # Express server
 ├── build.sh               # Build script
-└── README.md
+└── package.json
 ```
 
-## How It Works
+## 🔗 Hyperlink Navigation
 
-1. **Configure**: Use the web interface to select your preferences
-2. **Export**: Download configuration as JSON
-3. **Build**: Run build script to generate PDF
-4. **Import**: Load PDF into your note-taking app
-5. **Navigate**: Use hyperlinks to move between pages
-
-## Hyperlink Navigation
-
-The calendar includes intelligent hyperlinks:
+The planner includes intelligent hyperlinks for seamless navigation:
 
 - **Year → Months/Days**: Click month names or day numbers
-- **Year → Quarters**: Click quarter links (if enabled)
 - **Quarter → Months**: Click month names
 - **Month → Weeks/Days**: Click day numbers
 - **Week → Days**: Click day headers
-- **Back Navigation**: Every page has links back to parent pages
+- **Back Navigation**: Every page links back to parent pages
 
-## Compatibility
+## 💡 Tips
+
+1. **Start Simple**: Begin with a monthly-only configuration
+2. **Test Navigation**: Always test hyperlinks in your target app
+3. **Save Configurations**: The web UI downloads your config as JSON
+4. **Customize Colors**: Use visual presets or create custom themes
+5. **Paper Styles**: "Plain" for maximum flexibility, "Line" for structured notes
+
+## 🛠️ Advanced Usage
+
+### Command Line Build
+
+You can also build directly from the command line:
+
+```bash
+./build.sh path/to/config.json [output-name]
+```
+
+### Batch Generation
+
+Generate multiple configurations:
+
+```bash
+for config in examples/*.json; do
+    ./build.sh "$config"
+done
+```
+
+## 📱 Compatibility
 
 Tested with:
 - ✅ **GoodNotes** (iOS/macOS)
 - ✅ **Notability** (iOS/macOS)
+- ✅ **Apple Notes** (iOS/macOS)
 - ⚠️ **Remarkable** (limited testing)
 
-## Tips
+## 🐛 Troubleshooting
 
-1. **Start Simple**: Begin with monthly-only configuration, then add more pages
-2. **Test Navigation**: Always test hyperlinks in your target app before printing
-3. **Save Configurations**: Keep your JSON files for future years
-4. **Customize Colors**: Match your app's theme for consistency
-5. **Paper Styles**: Use "plain" for maximum flexibility, "line" for structured notes
+### Server Won't Start
 
-## Troubleshooting
+```bash
+# Check if port 3000 is in use
+lsof -i :3000
+
+# Install dependencies
+npm install
+```
 
 ### Typst Not Found
 
 ```bash
 # Install Typst
 brew install typst
+
+# Or download from: https://github.com/typst/typst
 ```
 
-### Build Fails
+### PDF Generation Fails
 
 - Check that your config JSON is valid
 - Ensure all required fields are present
@@ -176,44 +187,24 @@ brew install typst
 - Test in your target app (GoodNotes/Notability)
 - Ensure you're using the latest version of the app
 
-## Advanced Usage
+## 🤝 Contributing
 
-### Custom Fonts
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
 
-To use a custom font:
+## 📄 License
 
-1. Select "Custom..." in the font dropdown
-2. Enter the exact font name (must be installed on your system)
-3. Generate PDF
+This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-### Multiple Years
+## 👤 Author
 
-Generate calendars for multiple years:
+Created by [Hiran Venugopalan](https://hiran.in)
 
-```bash
-# Edit config to change year, then:
-./build.sh my-config.json calendar-2025
-./build.sh my-config.json calendar-2026
-```
-
-### Batch Generation
-
-Create a script to generate multiple configurations:
-
-```bash
-for config in examples/*.json; do
-    ./build.sh "$config"
-done
-```
-
-## Contributing
-
-This is a personal project, but suggestions and improvements are welcome!
-
-## License
-
-MIT License - Feel free to use and modify for personal use.
+- GitHub: [@hfactor](https://github.com/hfactor)
+- LinkedIn: [hfactor](https://linkedin.com/in/hfactor)
 
 ---
 
-**Created with ❤️ for digital note-takers**
+**Made with ❤️ for digital note-takers**
