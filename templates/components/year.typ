@@ -15,8 +15,11 @@
   let title = config.generation.pages.cover.at("title", default: str(year))
   let start-day-idx = get-start-day-idx(config)
   
+  // Use 3 columns for portrait (3x4 layout), 4 columns for landscape (4x3 layout)
+  let num-columns = if config.output.orientation == "portrait" { 3 } else { 4 }
+  
   let grid-content = grid(
-    columns: (1fr, 1fr, 1fr, 1fr),
+    columns: (1fr,) * num-columns,
     column-gutter: 12pt,
     row-gutter: 50pt,
     align: top,

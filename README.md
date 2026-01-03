@@ -83,7 +83,7 @@ Your planner will be generated in the `output/` directory.
 ## 📁 Project Structure
 
 ```
-papertools/
+PaperMaker/
 ├── web/                    # Web interface
 │   ├── index.html         # Main UI
 │   ├── index.css          # Styling

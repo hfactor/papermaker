@@ -174,7 +174,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime
 
 app.listen(PORT, () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚀 PaperTools V1 Backend Active');
+    console.log('🚀 PaperMaker V1 Backend Active');
     console.log(`📡 Port: ${PORT}`);
     console.log(`🕒 Cleanup: Every 15m (1h expiry)`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

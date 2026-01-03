@@ -47,7 +47,7 @@
 // Set document metadata
 #set document(
   title: config.generation.pages.cover.title,
-  author: "PaperTools",
+  author: "PaperMaker",
   date: datetime.today()
 )
 

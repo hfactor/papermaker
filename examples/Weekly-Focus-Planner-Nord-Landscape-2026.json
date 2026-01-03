@@ -1,0 +1,68 @@
+{
+    "timeRange": {
+        "startYear": 2026,
+        "startMonth": 1,
+        "durationMonths": 12
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "landscape"
+    },
+    "colors": {
+        "dark1": "#2e3440",
+        "light1": "#eceff4",
+        "accent": "#88c0d0"
+    },
+    "typography": {
+        "primaryFont": "Poppins",
+        "primaryFontWeight": 700,
+        "secondaryFont": "Nunito",
+        "secondaryFontWeight": 400,
+        "fontScale": 1.0,
+        "titleSize": 24
+    },
+    "generation": {
+        "order": "sequential",
+        "pages": {
+            "cover": {
+                "enabled": true,
+                "title": "Weekly Focus Planner 2026",
+                "imageUrl": ""
+            },
+            "year": {
+                "enabled": true
+            },
+            "quarter": {
+                "enabled": false,
+                "type": "calendar"
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": true
+            },
+            "day": {
+                "enabled": false,
+                "extraDaily": false,
+                "sidebar": "right",
+                "sidebarEnabled": false,
+                "sidebarModule": "planner",
+                "startTime": "09:00",
+                "endTime": "18:00",
+                "timeFormat": "12h",
+                "showHalfHour": false
+            }
+        }
+    },
+    "planner": {
+        "paperStyle": "line",
+        "density": "balanced",
+        "weekStart": 1,
+        "weekendType": "sat-sun",
+        "weekendDays": [
+            5,
+            6
+        ]
+    }
+}

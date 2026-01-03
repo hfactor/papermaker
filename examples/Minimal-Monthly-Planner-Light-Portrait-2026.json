@@ -1,0 +1,68 @@
+{
+    "timeRange": {
+        "startYear": 2026,
+        "startMonth": 1,
+        "durationMonths": 12
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "portrait"
+    },
+    "colors": {
+        "dark1": "#586e75",
+        "light1": "#fdf6e3",
+        "accent": "#268bd2"
+    },
+    "typography": {
+        "primaryFont": "Playfair Display",
+        "primaryFontWeight": 700,
+        "secondaryFont": "Source Sans Pro",
+        "secondaryFontWeight": 400,
+        "fontScale": 1.0,
+        "titleSize": 24
+    },
+    "generation": {
+        "order": "sequential",
+        "pages": {
+            "cover": {
+                "enabled": true,
+                "title": "Minimal Monthly Planner 2026",
+                "imageUrl": ""
+            },
+            "year": {
+                "enabled": false
+            },
+            "quarter": {
+                "enabled": false,
+                "type": "calendar"
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": false
+            },
+            "day": {
+                "enabled": false,
+                "extraDaily": false,
+                "sidebar": "right",
+                "sidebarEnabled": true,
+                "sidebarModule": "planner",
+                "startTime": "08:00",
+                "endTime": "20:00",
+                "timeFormat": "24h",
+                "showHalfHour": false
+            }
+        }
+    },
+    "planner": {
+        "paperStyle": "line",
+        "density": "compact",
+        "weekStart": 1,
+        "weekendType": "sat-sun",
+        "weekendDays": [
+            5,
+            6
+        ]
+    }
+}

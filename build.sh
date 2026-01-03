@@ -1,5 +1,5 @@
 #!/bin/bash
-# PaperTools V2 Build Script
+# PaperMaker V2 Build Script
 # Usage: ./build.sh <config-file.json> [output-name]
 
 set -e
@@ -48,7 +48,7 @@ echo "Debug: Extracted YEAR=$YEAR"
 OUTPUT_FILE="output/${OUTPUT_NAME}-${YEAR}.pdf"
 echo "Debug: OUTPUT_FILE=$OUTPUT_FILE"
 
-echo -e "${GREEN}PaperTools V2 - Constructing PDF...${NC}"
+echo -e "${GREEN}PaperMaker V2 - Constructing PDF...${NC}"
 echo "----------------------------------------"
 
 # Compile with Typst from the root

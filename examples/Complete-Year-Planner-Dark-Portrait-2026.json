@@ -1,0 +1,68 @@
+{
+    "timeRange": {
+        "startYear": 2026,
+        "startMonth": 1,
+        "durationMonths": 12
+    },
+    "output": {
+        "pageSize": "a4",
+        "orientation": "portrait"
+    },
+    "colors": {
+        "dark1": "#c0caf5",
+        "light1": "#1a1b26",
+        "accent": "#7aa2f7"
+    },
+    "typography": {
+        "primaryFont": "Montserrat",
+        "primaryFontWeight": 700,
+        "secondaryFont": "Open Sans",
+        "secondaryFontWeight": 400,
+        "fontScale": 1.0,
+        "titleSize": 24
+    },
+    "generation": {
+        "order": "sequential",
+        "pages": {
+            "cover": {
+                "enabled": true,
+                "title": "Complete Year Planner 2026",
+                "imageUrl": ""
+            },
+            "year": {
+                "enabled": true
+            },
+            "quarter": {
+                "enabled": true,
+                "type": "calendar"
+            },
+            "month": {
+                "enabled": true
+            },
+            "week": {
+                "enabled": true
+            },
+            "day": {
+                "enabled": true,
+                "extraDaily": true,
+                "sidebar": "left",
+                "sidebarEnabled": true,
+                "sidebarModule": "planner",
+                "startTime": "06:00",
+                "endTime": "22:00",
+                "timeFormat": "24h",
+                "showHalfHour": true
+            }
+        }
+    },
+    "planner": {
+        "paperStyle": "dot",
+        "density": "balanced",
+        "weekStart": 1,
+        "weekendType": "sat-sun",
+        "weekendDays": [
+            5,
+            6
+        ]
+    }
+}
